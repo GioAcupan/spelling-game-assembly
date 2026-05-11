@@ -9,18 +9,18 @@ if not exist bin mkdir bin
 if "%1"=="test_MAIN" goto TEST_MAIN
 if "%1"=="TEST_ST" goto TEST_ST
 if "%1"=="TEST_DT" goto TEST_DT
+if "%1"=="TEST_GFX" goto TEST_GFX
+if "%1"=="TEST_INP" goto TEST_INP
 
 REM ============================================
 REM Assemble each module to .OBJ
 REM ============================================
 tasm /zi /isrc src\MAIN.ASM, build\MAIN.OBJ
 if errorlevel 1 goto FAIL
-REM TODO: Day 2 — uncomment when GFX smoke test passes
-REM tasm /zi /isrc src\GFX.ASM, build\GFX.OBJ
+tasm /zi /isrc src\GFX.ASM, build\GFX.OBJ
 REM TODO: Day 3 — uncomment when AUDIO smoke test passes
 REM tasm /zi /isrc src\AUDIO.ASM, build\AUDIO.OBJ
-REM TODO: Day 4 — uncomment when INPUT smoke test passes
-REM tasm /zi /isrc src\INPUT.ASM, build\INPUT.OBJ
+tasm /zi /isrc src\INPUT.ASM, build\INPUT.OBJ
 REM TODO: Day 4 — uncomment when FILEIO smoke test passes
 REM tasm /zi /isrc src\FILEIO.ASM, build\FILEIO.OBJ
 REM TODO: Day 5 — uncomment when STATE smoke test passes
@@ -76,6 +76,32 @@ del DATA.OBJ
 tlink /v build\TEST_DT.OBJ+build\DATA.OBJ, bin\TEST_DT.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_DT.EXE
+goto DONE
+
+:TEST_GFX
+echo Building smoke test: GFX
+tasm /zi /isrc tests\TEST_GFX.ASM
+if errorlevel 1 goto FAIL
+copy TEST_GFX.OBJ build\TEST_GFX.OBJ >nul
+del TEST_GFX.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tlink /v build\TEST_GFX.OBJ+build\GFX.OBJ, bin\TEST_GFX.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TEST_GFX.EXE
+goto DONE
+
+:TEST_INP
+echo Building smoke test: INPUT
+tasm /zi /isrc tests\TEST_INP.ASM, build\TEST_INP.OBJ
+if errorlevel 1 goto FAIL
+tasm /zi /isrc src\INPUT.ASM, build\INPUT.OBJ
+if errorlevel 1 goto FAIL
+tlink /v build\TEST_INP.OBJ+build\INPUT.OBJ, bin\TEST_INP.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TEST_INP.EXE
 goto DONE
 
 :FAIL

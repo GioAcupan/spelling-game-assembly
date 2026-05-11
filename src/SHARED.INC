@@ -21,6 +21,7 @@ MAX_HEARTS       EQU 3
 WORDS_PER_TIER   EQU 10
 WORD_RECORD_SIZE EQU 16
 SPRITE_SIZE      EQU 1024    ; 32x32 pixels
+BG_SIZE          EQU 64000   ; 320x200 Mode 13h framebuffer
 
 ; --- Leaderboard ---
 LB_MAX_ENTRIES  EQU 5
