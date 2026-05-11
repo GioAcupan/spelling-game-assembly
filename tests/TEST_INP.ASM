@@ -62,7 +62,8 @@ MAIN PROC
     INT  21h
 
     POP  CX                    ; restore length
-    MOV  BYTE PTR INPUT_BUF[CX], '$'   ; DOS 09h needs $, not null
+    MOV  BX, CX
+    MOV  BYTE PTR INPUT_BUF[BX], '$'   ; DOS 09h needs $, not null
     LEA  DX, INPUT_BUF
     MOV  AH, 09h
     INT  21h

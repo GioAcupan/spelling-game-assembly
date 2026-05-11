@@ -95,10 +95,14 @@ goto DONE
 
 :TEST_INP
 echo Building smoke test: INPUT
-tasm /zi /isrc tests\TEST_INP.ASM, build\TEST_INP.OBJ
+tasm /zi /isrc tests\TEST_INP.ASM
 if errorlevel 1 goto FAIL
-tasm /zi /isrc src\INPUT.ASM, build\INPUT.OBJ
+copy TEST_INP.OBJ build\TEST_INP.OBJ >nul
+del TEST_INP.OBJ
+tasm /zi /isrc src\INPUT.ASM
 if errorlevel 1 goto FAIL
+copy INPUT.OBJ build\INPUT.OBJ >nul
+del INPUT.OBJ
 tlink /v build\TEST_INP.OBJ+build\INPUT.OBJ, bin\TEST_INP.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_INP.EXE
