@@ -94,10 +94,13 @@ def png_to_indices(path, palette):
 # ---- Formatting -------------------------------------------------------------
 
 def sprite_lines(indices, word, fname):
+    # 8 values per DB line — works around TASM 4.1 parser limit on long
+    # operand lists in large .DATA segments. See .claude/bugs/BUG-2026-05-09-TASM4-parse-limit.md
     out = [f"    ; {word}  ({fname})"]
     for row in range(32):
         chunk = indices[row*32 : row*32+32]
-        out.append("    DB " + ",".join(str(b) for b in chunk))
+        for i in range(0, 32, 8):
+            out.append("    DB " + ",".join(str(b) for b in chunk[i:i+8]))
     return out
 
 def placeholder(word):

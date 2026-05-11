@@ -8,6 +8,7 @@ if not exist bin mkdir bin
 
 if "%1"=="test_MAIN" goto TEST_MAIN
 if "%1"=="TEST_ST" goto TEST_ST
+if "%1"=="TEST_DT" goto TEST_DT
 
 REM ============================================
 REM Assemble each module to .OBJ
@@ -24,8 +25,7 @@ REM TODO: Day 4 — uncomment when FILEIO smoke test passes
 REM tasm /zi /isrc src\FILEIO.ASM, build\FILEIO.OBJ
 REM TODO: Day 5 — uncomment when STATE smoke test passes
 REM tasm /zi /isrc src\STATE.ASM, build\STATE.OBJ
-REM TODO: Day 5 — uncomment when DATA has content
-REM tasm /zi /isrc src\DATA.ASM, build\DATA.OBJ
+tasm /zi /isrc src\DATA.ASM, build\DATA.OBJ
 REM TODO: Day 5 — uncomment when screen modules pass
 REM tasm /zi /isrc src\SCR_INTRO.ASM, build\SCR_INTRO.OBJ
 REM tasm /zi /isrc src\SCR_GAME.ASM, build\SCR_GAME.OBJ
@@ -61,6 +61,21 @@ if errorlevel 1 goto FAIL
 tlink /v build\TEST_ST.OBJ+build\STATE.OBJ, bin\TEST_ST.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_ST.EXE
+goto DONE
+
+:TEST_DT
+echo Building smoke test: DATA
+tasm /zi /isrc tests\TEST_DT.ASM
+if errorlevel 1 goto FAIL
+copy TEST_DT.OBJ build\TEST_DT.OBJ >nul
+del TEST_DT.OBJ
+tasm /zi /isrc src\DATA.ASM
+if errorlevel 1 goto FAIL
+copy DATA.OBJ build\DATA.OBJ >nul
+del DATA.OBJ
+tlink /v build\TEST_DT.OBJ+build\DATA.OBJ, bin\TEST_DT.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TEST_DT.EXE
 goto DONE
 
 :FAIL

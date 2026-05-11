@@ -1,11 +1,11 @@
 ---
 name: tasm-conventions
-description: TASM 5.0 syntax conventions and 8086 real-mode bug patterns for the spelling-game project. Use this skill whenever writing, reviewing, or debugging .ASM files in this project, when uncertain whether a directive is TASM-compatible (vs MASM/NASM), when defining a PROC, when dealing with segment registers (DS/ES/CS), or when integrating modules across PUBLIC/EXTRN boundaries. Triggers on any assembly task in this repo — even simple ones — because TASM-specific conventions and the project's hard rules diverge from common LLM defaults toward NASM or MASM idioms.
+description: TASM 4.1 syntax conventions and 8086 real-mode bug patterns for the spelling-game project. Use this skill whenever writing, reviewing, or debugging .ASM files in this project, when uncertain whether a directive is TASM-compatible (vs MASM/NASM/TASM 5.x), when defining a PROC, when dealing with segment registers (DS/ES/CS), or when integrating modules across PUBLIC/EXTRN boundaries. Triggers on any assembly task in this repo — even simple ones — because TASM-4.1-specific conventions and the project's hard rules diverge from common LLM defaults toward NASM or MASM idioms.
 ---
 
-# TASM 5.0 + 8086 Conventions
+# TASM 4.1 + 8086 Conventions
 
-This project is **TASM 5.0** (Borland), `.MODEL SMALL`, real-mode 8086. Other dialects (NASM, MASM 6+, GAS) look superficially similar but miscompile or silently produce wrong code. Always apply this skill end-to-end when writing or reviewing assembly.
+This project is **TASM 4.1** (Borland, 1996), `.MODEL SMALL`, real-mode 8086. Other dialects (NASM, MASM 6+, GAS) — and even TASM 5.x — look superficially similar but miscompile or silently produce wrong code. 4.1 has its own parser quirks (see "TASM 4.1 Dos & Don'ts" below). Always apply this skill end-to-end when writing or reviewing assembly.
 
 ## DOS 8.3 filename limit — ALWAYS enforce
 
@@ -125,6 +125,63 @@ From spec Chapter 6.2 — walk this list mentally on every PROC:
 - `INT 10h, AX=0013h` — set Mode 13h (graphics)
 - `INT 10h, AX=0003h` — restore text mode (call before exit, or terminal stays at 320×200)
 - `INT 1Ah, AH=00h` — get tick count in CX:DX (18.2 Hz)
+
+## TASM 4.1 Dos & Don'ts (version-specific)
+
+These rules are calibrated to the TASM 4.1 we actually run, not later TASM versions or
+MASM/NASM. They cover quirks confirmed in this project's build history (see
+`.claude/bugs/BUG-2026-05-09-TASM4-parse-limit.md`) plus general TASM-4.1 gotchas.
+
+### Parser limits — confirmed by this project
+
+- **DON'T** write `DB`/`DW` directives with more than ~15 comma-separated operands.
+  Empirically TASM 4.1 corrupts its parser state after a critical mass of long-operand
+  data lines, manifesting later in the file as "Undefined symbol: DW" or
+  "CS unreachable from current segment". `sprite_export.py` already chunks at 8
+  values per `DB` line for this reason — preserve that when regenerating sprite data.
+- **DO** keep a single `.DATA` segment well under the theoretical 64K limit.
+  In practice, TASM 4.1 starts misbehaving on `.MODEL SMALL` data segments long
+  before 64K when they contain many data directives. If `.DATA` grows past ~30K of
+  initialized constants, split into a second `.ASM` module and link them.
+- **DON'T** mix many `DW OFFSET <label>` entries on one line in a table. Put one
+  `DW OFFSET …` per line. We hit "CS unreachable" errors yesterday when SOUND_TABLE
+  packed multiple `DW OFFSET` values per line.
+
+### Command-line / output-path handling
+
+- **DO** use `/isrc` (joined, no space) for the include directory — `tasm /zi /isrc src\FOO.ASM, build\FOO.OBJ`. The TASM 4.1 manual specifies the include path is concatenated to the `/i` switch.
+- **DON'T** assume `tasm /isrc src\FOO.ASM, build\FOO.OBJ` always writes the .OBJ
+  to `build\`. TASM 4.1's output-path handling is fragile when the destination
+  directory is nested. The `:TEST_DT` target in `BUILD.BAT` works around this by
+  letting TASM emit `.OBJ` to the current directory, then `copy`-ing it into
+  `build\` and `del`-ing the original. Use the same pattern if a new target hits
+  "Error writing object file".
+- **DO** keep the default multi-pass behavior (`/m5`, the default). Forward
+  `OFFSET`/`SEG` references in tables only resolve under multi-pass; do not pass
+  `/m1` to "speed up" a build.
+
+### Directives and predefined symbols TASM 4.1 supports
+
+- **DO** use `.MODEL SMALL`, `.STACK`, `.DATA`, `.CODE`, `PUBLIC`, `EXTRN`,
+  `PROC`/`ENDP`, `STRUC`/`ENDS`, `EQU`, `DB`/`DW`/`DD`, `DUP`, `OFFSET`, `SEG`,
+  `LEA`. All confirmed in the TASM 4.1 manual.
+- **DO** rely on `@DATA`, `@CODE`, `@STACK`, `@MODEL`, `@CODESIZE`, `@DATASIZE`
+  predefined symbols. These are stable across TASM 4.x.
+- **DON'T** use `.586`, `.686`, MMX/SSE mnemonics, or any 32-bit register name.
+  TASM 4.1 may parse `.386`/`.486` (legacy support) but the target CPU is 8086 in
+  DOSBox real mode — none of the post-8086 instructions are valid here regardless.
+  The `.claude/scripts/check_asm_write.py` PreToolUse hook will block these on save.
+- **DON'T** use ideal-mode-only syntax (`PROC` without `ENDP`, alternative
+  bracket semantics, etc.) unless `IDEAL` is explicitly invoked at the top of the
+  file. This project uses MASM-mode syntax exclusively.
+
+### When in doubt
+
+- **DON'T** propose "upgrade to TASM 5.0" as a fix. The user runs 4.1 and that
+  is fixed for the project.
+- **DO** check `.claude/bugs/BUG-2026-05-09-TASM4-parse-limit.md` before
+  diagnosing any "Undefined symbol: DW" or "CS unreachable" error — it's almost
+  certainly the parser-state quirk, not a real syntax error.
 
 ## When the assembler disagrees with you
 

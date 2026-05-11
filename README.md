@@ -23,7 +23,7 @@ CLAUDE.md                                — Project context loaded into every s
 2. Copy the entire `.claude/` directory to the project root as well.
 3. Drop your existing `SPELLING_GAME_MVP_1_.md` into `docs/SPEC.md` (the references in CLAUDE.md and the slash commands assume that path).
 4. Open the project in Claude Code (`claude` from the terminal in the project root).
-5. First-time check: ask Claude something simple like *"What toolchain does this project use?"* — it should cite TASM 5.0 from your CLAUDE.md without searching. If it doesn't, your CLAUDE.md isn't being loaded; verify it's at the repo root.
+5. First-time check: ask Claude something simple like *"What toolchain does this project use?"* — it should cite TASM 4.1 from your CLAUDE.md without searching. If it doesn't, your CLAUDE.md isn't being loaded; verify it's at the repo root.
 
 ## What each piece does and when it triggers
 

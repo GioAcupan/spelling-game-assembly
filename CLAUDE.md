@@ -5,7 +5,7 @@ Full design spec: `@docs/SPEC.md` (chapters are authoritative — reference by s
 
 ## Toolchain — DO NOT DEVIATE
 
-- **Assembler:** TASM 5.0 (Borland Turbo Assembler) — **NOT MASM, NOT NASM**
+- **Assembler:** TASM 4.1 (Borland Turbo Assembler, 1996) — **NOT MASM, NOT NASM, NOT TASM 5.x**
 - **Linker:** TLINK
 - **Runtime:** DOSBox (16-bit real mode, 8086)
 - **Memory model:** `.MODEL SMALL` (one 64KB code seg + one 64KB data seg)
@@ -42,7 +42,7 @@ CLEAN.BAT              → delete build\*.OBJ, bin\*.EXE
 
 BUILD.BAT runs `TASM` for each `.ASM` then `TLINK` to produce the `.EXE`. Smoke tests produce `bin\TEST_<NAME>.EXE` — the naming convention is `tests\test_<MODULE>.asm` → `bin\TEST_<MODULE>.EXE`.
 
-**All TASM calls must include `/isrc`** (no space — TASM 5.0 requires the include path joined to the switch) so `INCLUDE SHARED.INC` resolves. BUILD.BAT and CLEAN.BAT live at the project root (not inside `build/`), and all paths in them are relative to the project root.
+**All TASM calls must include `/isrc`** (no space — TASM concatenates the include path to the `/i` switch; this is the form documented in the TASM 4.1 manual) so `INCLUDE SHARED.INC` resolves. BUILD.BAT and CLEAN.BAT live at the project root (not inside `build/`), and all paths in them are relative to the project root.
 
 When adding a new `.ASM` file, add it to BUILD.BAT's TASM calls **and** TLINK line. When a module is incomplete and its smoke test hasn't passed, do NOT add it to the main `SPELL.EXE` link line.
 

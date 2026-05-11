@@ -2,7 +2,7 @@
 
 > **Project:** Educational Spelling Game for Toddlers
 > **Platform:** Intel 8086 (16-bit Real Mode) via DOSBox
-> **Toolchain:** TASM 5.0 + TLINK
+> **Toolchain:** TASM 4.1 + TLINK
 > **Team:** 3 devs + 1 spriter
 > **Timeline:** 1-week sprint (3-week deadline buffer)
 > **Document Purpose:** Single Source of Truth for implementation. Every dev reads Chapters 1 & 2. Each dev reads their assigned Chapter 3+ module before coding.
@@ -2080,6 +2080,50 @@ END                   ; END label only in MAIN
 | `DS` | Data segment (set to @DATA at startup) |
 | `ES` | Extra segment (often `A000h` for video) |
 | `SS` | Stack segment |
+
+## A.1 TASM 4.1 Quirks — Dos & Don'ts
+
+The toolchain is **TASM 4.1** specifically — not 5.x, not MASM, not NASM. A few
+4.1-specific gotchas have already cost real time on this project. Internalize these
+before writing data-heavy modules. (LLM users: the same content is in
+`.claude/skills/tasm-conventions/SKILL.md` and auto-loads on assembly tasks.)
+
+### Parser limits (confirmed in this project)
+
+- **DON'T** put more than ~15 comma-separated values on a single `DB`/`DW` line.
+  TASM 4.1's parser state degrades after a critical mass of long-operand directives
+  in the same module — symptoms surface later in the file as "Undefined symbol: DW"
+  or "CS unreachable from current segment". `sprite_export.py` chunks at 8 values
+  per line for this reason; preserve that when regenerating sprite data.
+- **DO** keep each `.DATA` segment well below the 64K theoretical max. Past ~30K of
+  initialized constants, split into a second `.ASM` module and link them.
+- **DON'T** pack multiple `DW OFFSET <label>` entries on one line in a jump/dispatch
+  table — one per line. SOUND_TABLE hit "CS unreachable" errors yesterday from this.
+
+### Build invocation
+
+- **DO** use `/isrc` (joined, no space) — `tasm /zi /isrc src\FOO.ASM, build\FOO.OBJ`.
+- **DON'T** assume `tasm /isrc src\FOO.ASM, build\FOO.OBJ` reliably writes the .OBJ
+  to a nested `build\` directory. TASM 4.1's output-path handling is fragile.
+  `BUILD.BAT`'s `:TEST_DT` target uses a `copy`+`del` workaround — copy that pattern
+  for any new target that hits "Error writing object file".
+- **DO** keep multi-pass mode (`/m5`, the default). Forward `OFFSET`/`SEG` references
+  in tables only resolve under multi-pass.
+
+### CPU and instruction set
+
+- **DON'T** use `.586`, `.686`, MMX/SSE mnemonics, or any 32-bit register. The target
+  CPU is 8086 in DOSBox real mode; later instructions are invalid regardless of what
+  TASM 4.1 might parse. The `.claude/scripts/check_asm_write.py` PreToolUse hook
+  blocks these on save.
+- **DON'T** use ideal-mode-only syntax. This project uses MASM-mode syntax exclusively.
+
+### When debugging a strange error
+
+- **DO** check `.claude/bugs/BUG-2026-05-09-TASM4-parse-limit.md` first if you see
+  "Undefined symbol: DW" or "CS unreachable" — it's almost certainly the parser-state
+  quirk, not a real syntax error.
+- **DON'T** propose "upgrade to TASM 5.0" as a fix. The project is fixed on 4.1.
 
 ## B. Interrupt Quick Reference
 
