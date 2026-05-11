@@ -4,10 +4,10 @@ bin/
 *.OBJ
 *.MAP
 *.EXE
+!GAMETEMP.EXE
 
 # Temp / backup / debug artifacts
 *.bak
 nul
-gametemp.*
 src/SPRITES.ASM
 src/SPRITES.ASM.full
