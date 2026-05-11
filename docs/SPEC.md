@@ -52,25 +52,25 @@
 
 Before diving in, these decisions are **final** and reflected throughout the doc. If any of them need revisiting, flag it before devs start coding.
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| **Code organization** | Multiple `.ASM` files linked into one `.EXE` | Enables parallel dev work; isolates bugs; mandatory for 3-dev team |
-| **Memory model** | `.MODEL SMALL` | One 64KB code segment, one 64KB data segment — more than enough |
-| **Graphics mode** | VGA Mode 13h (320×200, 256 colors) | Industry-standard 8086 graphics mode; simple linear framebuffer at `A000h` |
-| **Screen backgrounds** *(v1.2)* | **Disk-loaded full-screen `.BIN` images, blitted to `A000h`** | 64,000 bytes each — too big for `.MODEL SMALL` data segment. Disk load is the only path. |
-| **Audio approach** | **PC Speaker beeps/tones** | Senior project used the same — confirmed-passing bar. Sound Blaster DAC is scope creep. |
-| **Difficulty modes** | **3 tiers: Easy / Medium / Hard** (word-length based) | Required by prof |
-| **Object count** | **10 words per tier = 30 total** (Easy: short, Medium: mid, Hard: long) | Prof required more words; word-length tiers are the difficulty axis |
-| **Word list architecture** | **Option A: 3 separate arrays** (`EASY_WORDS`, `MED_WORDS`, `HARD_WORDS`) | Simpler pointer math than flat-list-with-tags; no searching needed |
-| **Player modes** *(v1.2)* | **1P (solo) and 2P (hot-seat versus)** | Prof addition; same keyboard, alternating answers, joint judgment |
-| **2P round structure** *(v1.2)* | Same word for both players, P1 answers then P2 answers, judge both, advance | Cleanest pacing; state machine stays simple (loop inside `SCR_ROUND_RUN`) |
-| **2P fairness** *(v1.2)* | **Accepted asymmetry — P2 sees P1's typing.** Toddler game; sound cue is the real challenge. | Documented limitation. Don't engineer around it for MVP. |
-| **Name input length** | 3 characters (arcade-style) | Matches spec |
-| **Starting hearts** | 3 per player | Standard game feel |
-| **Leaderboard size** | Top 5 entries, stored in `SCORES.DAT` | Prof wants difficulty on leaderboard |
-| **Leaderboard 2P policy** *(v1.2)* | **One entry per player** (a 2P match writes two independent records) | Simpler than match records; reuses 8B format unchanged |
-| **Leaderboard record** | Name (3B) + Score (2B) + Difficulty (1B) + padding (2B) = 8B per entry | Stores difficulty for display: `AAA \| 240pts \| HARD` |
-| **Character encoding** | ASCII uppercase only | Simpler comparison logic; toddler-friendly |
+| Decision                           | Choice                                                                                       | Rationale                                                                                |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Code organization**              | Multiple `.ASM` files linked into one `.EXE`                                                 | Enables parallel dev work; isolates bugs; mandatory for 3-dev team                       |
+| **Memory model**                   | `.MODEL SMALL`                                                                               | One 64KB code segment, one 64KB data segment — more than enough                          |
+| **Graphics mode**                  | VGA Mode 13h (320×200, 256 colors)                                                           | Industry-standard 8086 graphics mode; simple linear framebuffer at `A000h`               |
+| **Screen backgrounds** *(v1.2)*    | **Disk-loaded full-screen `.BIN` images, blitted to `A000h`**                                | 64,000 bytes each — too big for `.MODEL SMALL` data segment. Disk load is the only path. |
+| **Audio approach**                 | **PC Speaker beeps/tones**                                                                   | Senior project used the same — confirmed-passing bar. Sound Blaster DAC is scope creep.  |
+| **Difficulty modes**               | **3 tiers: Easy / Medium / Hard** (word-length based)                                        | Required by prof                                                                         |
+| **Object count**                   | **10 words per tier = 30 total** (Easy: short, Medium: mid, Hard: long)                      | Prof required more words; word-length tiers are the difficulty axis                      |
+| **Word list architecture**         | **Option A: 3 separate arrays** (`EASY_WORDS`, `MED_WORDS`, `HARD_WORDS`)                    | Simpler pointer math than flat-list-with-tags; no searching needed                       |
+| **Player modes** *(v1.2)*          | **1P (solo) and 2P (hot-seat versus)**                                                       | Prof addition; same keyboard, alternating answers, joint judgment                        |
+| **2P round structure** *(v1.2)*    | Same word for both players, P1 answers then P2 answers, judge both, advance                  | Cleanest pacing; state machine stays simple (loop inside `SCR_ROUND_RUN`)                |
+| **2P fairness** *(v1.2)*           | **Accepted asymmetry — P2 sees P1's typing.** Toddler game; sound cue is the real challenge. | Documented limitation. Don't engineer around it for MVP.                                 |
+| **Name input length**              | 3 characters (arcade-style)                                                                  | Matches spec                                                                             |
+| **Starting hearts**                | 3 per player                                                                                 | Standard game feel                                                                       |
+| **Leaderboard size**               | Top 5 entries, stored in `SCORES.DAT`                                                        | Prof wants difficulty on leaderboard                                                     |
+| **Leaderboard 2P policy** *(v1.2)* | **One entry per player** (a 2P match writes two independent records)                         | Simpler than match records; reuses 8B format unchanged                                   |
+| **Leaderboard record**             | Name (3B) + Score (2B) + Difficulty (1B) + padding (2B) = 8B per entry                       | Stores difficulty for display: `AAA \| 240pts \| HARD`                                   |
+| **Character encoding**             | ASCII uppercase only                                                                         | Simpler comparison logic; toddler-friendly                                               |
 
 ---
 
@@ -275,13 +275,13 @@ When the `.EXE` runs under DOSBox, the machine looks like this:
 
 **Our program's memory footprint (approximate):**
 
-| Section | Size | Contents |
-|---|---|---|
-| Code segment | ~7-11 KB | All the `.ASM` modules compiled together (+~1KB for v1.2 additions) |
-| Data segment | ~33 KB | 30 sprites × 1KB + word lists + strings + variables + player arrays (~20B v1.2 add) |
-| Stack segment | 1 KB | Function call stack |
-| **Total (in-EXE)** | **~41-45 KB** | Within 64 KB `.MODEL SMALL` limit — comfortable |
-| **External `.BIN` backgrounds** | **~7 × 64 KB = ~448 KB on disk** | Not in EXE; streamed to `A000h` on demand |
+| Section                         | Size                             | Contents                                                                            |
+| ------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------- |
+| Code segment                    | ~7-11 KB                         | All the `.ASM` modules compiled together (+~1KB for v1.2 additions)                 |
+| Data segment                    | ~33 KB                           | 30 sprites × 1KB + word lists + strings + variables + player arrays (~20B v1.2 add) |
+| Stack segment                   | 1 KB                             | Function call stack                                                                 |
+| **Total (in-EXE)**              | **~41-45 KB**                    | Within 64 KB `.MODEL SMALL` limit — comfortable                                     |
+| **External `.BIN` backgrounds** | **~7 × 64 KB = ~448 KB on disk** | Not in EXE; streamed to `A000h` on demand                                           |
 
 > ⚠️ **Why backgrounds are NOT in the data segment:** One 320×200 background is 64,000 bytes — almost a full data segment by itself. Even one would crowd out the sprite table. Disk-loading is the only viable path under `.MODEL SMALL`. The 64KB-per-image cost is paid on disk, not in RAM.
 
@@ -367,33 +367,33 @@ spelling_game/
 
 ### Core Engine
 
-| Module | Owns | Exports |
-|---|---|---|
-| `MAIN.ASM` | Program entry, global game loop, all runtime state | (none — it's the top level) |
-| `STATE.ASM` | `CURRENT_STATE` byte, transition logic | `GAME_TICK` |
-| `DATA.ASM` | All static game data | Labels: `EASY_WORDS`, `MED_WORDS`, `HARD_WORDS`, `TIER_TABLE`, `SPRITE_TABLE`, `SOUND_TABLE`, UI strings |
+| Module      | Owns                                               | Exports                                                                                                  |
+| ----------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `MAIN.ASM`  | Program entry, global game loop, all runtime state | (none — it's the top level)                                                                              |
+| `STATE.ASM` | `CURRENT_STATE` byte, transition logic             | `GAME_TICK`                                                                                              |
+| `DATA.ASM`  | All static game data                               | Labels: `EASY_WORDS`, `MED_WORDS`, `HARD_WORDS`, `TIER_TABLE`, `SPRITE_TABLE`, `SOUND_TABLE`, UI strings |
 
 ### I/O Services
 
-| Module | Owns | Exports |
-|---|---|---|
-| `GFX.ASM` | Video mode, drawing primitives, **background loading (v1.2)** | `GFX_INIT`, `GFX_CLEAR`, `GFX_LOAD_BG`, `GFX_DRAW_SPRITE`, `GFX_DRAW_CHAR`, `GFX_DRAW_STRING`, `GFX_SHUTDOWN` |
-| `AUDIO.ASM` | Speaker port control | `SND_PLAY_PATTERN`, `SND_SILENCE` |
-| `INPUT.ASM` | Keyboard polling | `INP_WAIT_KEY`, `INP_CHECK_KEY`, `INP_READ_STRING` |
-| `FILEIO.ASM` | Leaderboard disk I/O | `FILE_LOAD_SCORES`, `FILE_SAVE_SCORES`, `FILE_INSERT_SCORE` |
+| Module       | Owns                                                          | Exports                                                                                                       |
+| ------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `GFX.ASM`    | Video mode, drawing primitives, **background loading (v1.2)** | `GFX_INIT`, `GFX_CLEAR`, `GFX_LOAD_BG`, `GFX_DRAW_SPRITE`, `GFX_DRAW_CHAR`, `GFX_DRAW_STRING`, `GFX_SHUTDOWN` |
+| `AUDIO.ASM`  | Speaker port control                                          | `SND_PLAY_PATTERN`, `SND_SILENCE`                                                                             |
+| `INPUT.ASM`  | Keyboard polling                                              | `INP_WAIT_KEY`, `INP_CHECK_KEY`, `INP_READ_STRING`                                                            |
+| `FILEIO.ASM` | Leaderboard disk I/O                                          | `FILE_LOAD_SCORES`, `FILE_SAVE_SCORES`, `FILE_INSERT_SCORE`                                                   |
 
 ### Screen Handlers
 
-| Module | Owns | Exports |
-|---|---|---|
-| `SCR_INTRO.ASM` | Title, mode, name, difficulty, instructions | `SCR_TITLE_RUN`, `SCR_MODE_RUN` *(v1.2)*, `SCR_NAME_RUN`, `SCR_DIFF_RUN`, `SCR_INSTR_RUN` |
-| `SCR_GAME.ASM` | Round logic (with 2P loop), scoring, judgment | `SCR_ROUND_RUN`, `SCR_JUDGE_RUN` |
-| `SCR_END.ASM` | Score display, leaderboard, 2P winner display | `SCR_END_RUN` |
+| Module          | Owns                                          | Exports                                                                                   |
+| --------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `SCR_INTRO.ASM` | Title, mode, name, difficulty, instructions   | `SCR_TITLE_RUN`, `SCR_MODE_RUN` *(v1.2)*, `SCR_NAME_RUN`, `SCR_DIFF_RUN`, `SCR_INSTR_RUN` |
+| `SCR_GAME.ASM`  | Round logic (with 2P loop), scoring, judgment | `SCR_ROUND_RUN`, `SCR_JUDGE_RUN`                                                          |
+| `SCR_END.ASM`   | Score display, leaderboard, 2P winner display | `SCR_END_RUN`                                                                             |
 
 ### Shared
 
-| Module | Contents |
-|---|---|
+| Module       | Contents                                                                                                                                                                                                                                                                                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SHARED.INC` | `EQU` constants (`STATE_TITLE=0`, `STATE_MODE=1`, `STATE_NAME=2`, `STATE_DIFF=3`, `STATE_INSTR=4`, `STATE_ROUND=5`, `STATE_JUDGE=6`, `STATE_END=7`, `STATE_QUIT=8`, `DIFF_EASY=0`, `DIFF_MED=1`, `DIFF_HARD=2`, `MAX_HEARTS=3`, `MAX_PLAYERS=2`, `WORDS_PER_TIER=10`, `WORD_RECORD_SIZE=16`, `SPRITE_SIZE=1024`, `BG_SIZE=64000`), macros, `EXTRN` declarations |
 
 ## 2.3 Module Interaction Map
@@ -430,6 +430,7 @@ spelling_game/
 > ⚠️ **v1.2 scope warning:** The original 1-week sprint estimate no longer fits. Backgrounds + 2P add ~3-5 dev-days and significant spriter work. The 3-week deadline buffer absorbs it; communicate the new ETA to the team.
 
 ### 🧑‍💻 Dev 1 — Lead (You)
+
 - `MAIN.ASM`, `STATE.ASM`, `SHARED.INC`
 - `SCR_INTRO.ASM` (incl. new `SCR_MODE_RUN`, modified `SCR_NAME_RUN` for 2P loop)
 - `SCR_GAME.ASM` (incl. 2P round loop + judging both players)
@@ -438,17 +439,20 @@ spelling_game/
 - **~22 hours total** (was ~15; +7 for 2P plumbing)
 
 ### 🧑‍💻 Dev 2 — Graphics + Input
+
 - `GFX.ASM` (Mode 13h, sprite draw, text draw, **+ `GFX_LOAD_BG` v1.2**)
 - Font rendering with transparency (per Chapter 4.2 v1.2 note)
 - `INPUT.ASM`
 - **~10 hours total** (was ~7; +3 for `GFX_LOAD_BG` and font transparency)
 
 ### 🧑‍💻 Dev 3 — Audio + File I/O
+
 - `AUDIO.ASM`
 - `FILEIO.ASM` (no v1.2 changes — record format unchanged, just insert both players in 2P from `SCR_END_RUN`)
 - **~6 hours total** (unchanged)
 
 ### 🎨 Spriter (parallel, off critical path)
+
 - **30 × 32×32 sprites** in 16-color VGA palette (10 Easy + 10 Medium + 10 Hard)
 - **7 × full-screen 320×200 backgrounds (v1.2)** — TITLE, MODE, NAME, DIFF, INSTR, ROUND, END
   - ROUND.BIN needs a reserved blank area where the sprite renders (around x=144, y=50) and where text labels go (status bar, prompts)
@@ -458,6 +462,7 @@ spelling_game/
 - **TALK TO THEM TODAY.** Backgrounds add a third of their workload.
 
 **Fallback if spriter capacity is genuinely insufficient:**
+
 - Drop to 4 backgrounds (TITLE, ROUND, END, INSTR — reuse ROUND.BIN for JUDGE; reuse INSTR.BIN for MODE/NAME/DIFF)
 - Drop sprite count to 6-8 per tier if needed
 
@@ -494,6 +499,7 @@ echo Build complete: bin\SPELL.EXE
 ```
 
 **Flags explained:**
+
 - `/zi` on TASM — include debug info (remove for final)
 - `/v` on TLINK — verbose link
 
@@ -512,9 +518,11 @@ echo Build complete: bin\SPELL.EXE
 ## 3.1 `MAIN.ASM` — Entry Point & Game Loop
 
 ### Purpose
+
 The top-level module. Owns program initialization, the main loop, and shutdown. Also declares all mutable runtime state as globals.
 
 ### Dependencies
+
 - `STATE.ASM` (calls `GAME_TICK`)
 - `GFX.ASM` (calls `GFX_INIT`, `GFX_SHUTDOWN`)
 - `FILEIO.ASM` (calls `FILE_LOAD_SCORES`)
@@ -579,17 +587,22 @@ END MAIN
 ### Design Notes (v1.2 additions)
 
 - **Player arrays are byte/word-indexed by `CURRENT_PLAYER`.** Read pattern:
+  
   ```asm
   MOV BL, CURRENT_PLAYER
   MOV BH, 0
   SHL BX, 1                  ; for word array (SCORES, PLAYER_TIMES)
   MOV AX, SCORES[BX]
   ```
+  
   For byte array (`HEARTS_ARR`, `PLAYER_RESULTS`): skip the `SHL`.
+
 - **`NUM_PLAYERS` is set once** by `SCR_MODE_RUN` and never changes during a session.
+
 - **`CURRENT_PLAYER` rotates** during round/name entry. Always reset to 0 before the loop.
 
 ### Integration Contract
+
 - **Inputs:** None.
 - **Outputs:** Sets up `DS`, runs main loop, exits to DOS.
 - **Called by:** DOS.
@@ -600,9 +613,11 @@ END MAIN
 ## 3.2 `STATE.ASM` — Game State Machine
 
 ### Purpose
+
 Dispatches the current game state to the correct screen handler.
 
 ### Dependencies
+
 - All `SCR_*.ASM` modules
 - `SHARED.INC`
 
@@ -669,10 +684,12 @@ END
 ```
 
 ### Design Notes
+
 - Screen handlers are responsible for setting the next state.
 - Jump-table optimization remains optional; defer until basic dispatch is proven.
 
 ### Integration Contract
+
 - **Inputs:** Reads `CURRENT_STATE`.
 - **Outputs:** Calls the appropriate screen handler.
 - **Called by:** `MAIN.ASM`.
@@ -683,6 +700,7 @@ END
 ## 3.3 `DATA.ASM` — Word List & Assets
 
 ### Purpose
+
 The project's "database." All compile-time-constant data.
 
 ### Structure (v1.2 strings additions only — word/sprite/sound sections unchanged from v1.1)
@@ -738,10 +756,12 @@ END
 ```
 
 ### Design Notes
+
 - All v1.1 word/sprite/sound data is unchanged. Only strings added.
 - Background filename strings centralized here so screens just reference labels (`LEA DX, BG_TITLE`).
 
 ### Integration Contract
+
 - **Inputs:** None.
 - **Outputs:** All labels exported via `PUBLIC`.
 
@@ -751,30 +771,148 @@ END
 
 ## 4.1 `INPUT.ASM` — Keyboard Input
 
-**No v1.2 changes.** Implementation unchanged from v1.1. The same `INP_READ_STRING` is called twice in 2P mode (once per player), with `INPUT_BUFFER` cleared and reused between calls. Each player's correctness result is stored in `PLAYER_RESULTS[CURRENT_PLAYER]` before the next read.
+Purpose
 
-Refer to v1.1 spec Chapter 4.1 for procedure bodies.
+All keyboard reading goes through here. Three modes: wait for any key, check if a key is pressed (non-blocking), and read a string until Enter.
+
+### Dependencies
+
+None (pure BIOS interrupt wrapper).
+
+### Core Interrupts
+
+- **`INT 16h, AH=00h`** — Wait for key, return scan code in `AH` and ASCII in `AL`. **Blocks.**
+- **`INT 16h, AH=01h`** — Check keyboard buffer, set Zero Flag if empty. **Non-blocking.**
+
+### Structure
+
+```asm
+; INPUT.ASM — Keyboard services
+.MODEL SMALL
+.DATA
+    INCLUDE SHARED.INC
+
+.CODE
+    PUBLIC INP_WAIT_KEY, INP_CHECK_KEY, INP_READ_STRING
+
+;---------------------------------------------------------------
+; INP_WAIT_KEY — Block until a key is pressed.
+; Out: AL = ASCII char, AH = scan code
+;---------------------------------------------------------------
+INP_WAIT_KEY PROC
+    MOV AH, 00h
+    INT 16h
+    RET
+INP_WAIT_KEY ENDP
+
+;---------------------------------------------------------------
+; INP_CHECK_KEY — Non-blocking key check.
+; Out: ZF=1 if no key, ZF=0 if key available (AL=ASCII)
+;      If key was available, it IS consumed from buffer (via INT 16h AH=00).
+;---------------------------------------------------------------
+INP_CHECK_KEY PROC
+    MOV AH, 01h
+    INT 16h
+    JZ  ICK_NONE            ; no key in buffer
+    MOV AH, 00h             ; consume the key
+    INT 16h
+    OR  AL, AL              ; clear ZF (assuming AL != 0; tweak if needed)
+ICK_DONE:
+    RET
+ICK_NONE:
+    XOR AX, AX              ; ZF=1
+    RET
+INP_CHECK_KEY ENDP
+
+;---------------------------------------------------------------
+; INP_READ_STRING — Read a string until Enter, with basic editing.
+; In:  ES:DI = buffer, CX = max length
+; Out: buffer filled, null-terminated; CX = actual length
+;---------------------------------------------------------------
+INP_READ_STRING PROC
+    PUSH AX
+    PUSH BX
+    PUSH DI
+
+    XOR  BX, BX             ; BX = current length
+
+IRS_LOOP:
+    CALL INP_WAIT_KEY
+    CMP  AL, 13             ; Enter?
+    JE   IRS_DONE
+    CMP  AL, 8              ; Backspace?
+    JE   IRS_BACKSPACE
+    CMP  BX, CX
+    JAE  IRS_LOOP           ; buffer full; ignore new chars
+
+    ; --- Convert to uppercase if letter ---
+    CMP  AL, 'a'
+    JB   IRS_STORE
+    CMP  AL, 'z'
+    JA   IRS_STORE
+    SUB  AL, 32             ; lowercase -> uppercase
+
+IRS_STORE:
+    MOV  ES:[DI+BX], AL
+    INC  BX
+    ; TODO: echo char to screen via GFX_DRAW_TEXT
+    JMP  IRS_LOOP
+
+IRS_BACKSPACE:
+    OR   BX, BX
+    JZ   IRS_LOOP           ; nothing to delete
+    DEC  BX
+    ; TODO: erase char on screen
+    JMP  IRS_LOOP
+
+IRS_DONE:
+    MOV  BYTE PTR ES:[DI+BX], 0   ; null terminate
+    MOV  CX, BX                   ; return length in CX
+    POP  DI
+    POP  BX
+    POP  AX
+    RET
+INP_READ_STRING ENDP
+
+END
+```
+
+### Design Notes
+
+- **Uppercase conversion in input.** Toddlers might type either case. We force uppercase in the buffer, and the word list is also uppercase. Comparison becomes case-insensitive "for free."
+- **Backspace support.** Essential for toddler UX. Implementation is trivial here; the screen echo (visually erasing) is the screen module's job.
+- **No timeout.** `INP_READ_STRING` blocks forever on missing Enter. The game loop accepts this because rounds are turn-based.
+
+### Integration Contract
+
+- **Inputs:** For `READ_STRING`: `ES:DI` buffer pointer, `CX` max length.
+- **Outputs:** Buffer null-terminated; `CX` actual length.
+- **Clobbers:** `AX`, `AH`, `AL`, flags (preserved via push/pop for BX/DI as shown).
 
 ---
 
 ## 4.2 `GFX.ASM` — Graphics (Mode 13h, Backgrounds, Sprite Rendering)
 
 ### Purpose
+
 All drawing goes through here. Screens tell it *what* to draw and *where*; `GFX.ASM` handles the pixel manipulation and **background loading from disk (v1.2)**.
 
 ### Dependencies
+
 - Raw hardware + BIOS
 - `INT 21h` for `GFX_LOAD_BG` (v1.2)
 
 ### Core Concepts
 
 **Mode 13h:**
+
 - Resolution: 320×200
 - Colors: 256 (VGA palette)
 - Framebuffer: at `A000:0000`, each byte = one pixel's palette index
 - To plot a pixel: `ES:[DI] = color` where `DI = y*320 + x`, `ES = A000h`
 
 **Backgrounds (v1.2):**
+
 - Each background `.BIN` file is exactly 64,000 bytes, raw palette indices, row-major, top-left origin
 - `GFX_LOAD_BG` opens the file, reads all 64,000 bytes directly to `A000:0000`, closes the file
 - Sprites and text composite on top using existing transparency (color 0 = transparent)
@@ -856,22 +994,31 @@ END
 ### Design Notes
 
 - **`GFX_LOAD_BG` replaces `GFX_CLEAR` at the top of each screen handler.** Old pattern:
+  
   ```asm
   MOV  AL, 1
   CALL GFX_CLEAR
   ```
+  
   New pattern:
+  
   ```asm
   LEA  DX, BG_TITLE
   CALL GFX_LOAD_BG
   ```
+
 - **Error handling is silent.** If a `.BIN` file is missing, the framebuffer is left as-is. The first screen to fail will look like garbage, which is the right diagnostic signal — fail loud at runtime, not silent.
+
 - **`DS:DX` for the filename, output to `ES:DI`.** The procedure handles segment register juggling internally. Caller doesn't need to set up segments beyond `DS=@DATA`.
+
 - **`ES` is left as `A000h` on return.** This matches the post-`GFX_INIT` contract; subsequent sprite draws Just Work.
+
 - **🔥 Font rendering must use sprite-style transparency (v1.2 critical).** When Dev 2 implements `GFX_DRAW_CHAR`, the inner loop must skip "off" pixels in the glyph bitmap rather than drawing them as black. Otherwise every text label punches a black rectangle through the background. Same `OR AL, AL / JZ skip` pattern as `GFX_DRAW_SPRITE`. **This is the #1 v1.2 implementation gotcha.**
+
 - **`BG_SIZE` constant.** Defined in `SHARED.INC` as `BG_SIZE EQU 64000`. Use the constant; never hardcode 64000.
 
 ### Integration Contract (v1.2 additions)
+
 - **`GFX_LOAD_BG`:**
   - **In:** `DS:DX` = filename
   - **Out:** Framebuffer at `A000h` filled; `ES=A000h` on return
@@ -883,19 +1030,172 @@ END
 
 ## 4.3 `AUDIO.ASM` — PC Speaker Sound Cues
 
-**No v1.2 changes.** Refer to v1.1 spec Chapter 4.3 for procedure bodies.
+Purpose
+
+Play distinguishable tone patterns as audio cues for each word. Not real speech — our bar is "different for each word, recognizable as 'the apple sound.'"
+
+### Dependencies
+
+None (direct hardware port I/O).
+
+### Core Concepts
+
+**PC Speaker via ports 42h, 43h, 61h:**
+
+- Port `43h` is the PIT (Programmable Interval Timer) control register.
+- Port `42h` is PIT channel 2 data (connected to speaker).
+- Port `61h` bits 0-1 enable/disable the speaker.
+- To play a frequency `F`: write `1193180 / F` as two bytes (low, high) to port `42h`, then set bits 0-1 of port `61h`.
+- To silence: clear bits 0-1 of port `61h`.
+
+### Structure
+
+```asm
+; AUDIO.ASM — PC speaker tone generation
+.MODEL SMALL
+.DATA
+    INCLUDE SHARED.INC
+
+.CODE
+    PUBLIC SND_PLAY_TONE, SND_SILENCE, SND_PLAY_PATTERN
+
+;---------------------------------------------------------------
+; SND_PLAY_TONE — Start playing a continuous tone.
+; In: BX = frequency in Hz (e.g., 440 = A)
+;---------------------------------------------------------------
+SND_PLAY_TONE PROC
+    PUSH AX
+    PUSH BX
+    PUSH DX
+
+    ; Compute divisor = 1193180 / frequency
+    MOV  DX, 12h          ; 1193180 = 0012_34DCh
+    MOV  AX, 34DCh
+    DIV  BX               ; AX = divisor
+
+    ; Program PIT channel 2 (control register)
+    PUSH AX
+    MOV  AL, 0B6h         ; channel 2, both bytes, mode 3 (square wave)
+    OUT  43h, AL
+    POP  AX
+    OUT  42h, AL          ; low byte
+    MOV  AL, AH
+    OUT  42h, AL          ; high byte
+
+    ; Enable speaker (bits 0-1 of port 61h)
+    IN   AL, 61h
+    OR   AL, 03h
+    OUT  61h, AL
+
+    POP  DX
+    POP  BX
+    POP  AX
+    RET
+SND_PLAY_TONE ENDP
+
+;---------------------------------------------------------------
+; SND_SILENCE — Stop the speaker.
+;---------------------------------------------------------------
+SND_SILENCE PROC
+    PUSH AX
+    IN   AL, 61h
+    AND  AL, 0FCh         ; clear bits 0-1
+    OUT  61h, AL
+    POP  AX
+    RET
+SND_SILENCE ENDP
+
+;---------------------------------------------------------------
+; SND_DELAY — Busy-wait for CX milliseconds.
+; Uses BIOS tick counter (~55ms resolution, so we round up).
+; For finer timing: use INT 15h AH=86h (microsecond delay, safer).
+;---------------------------------------------------------------
+SND_DELAY PROC
+    PUSH AX
+    PUSH CX
+    PUSH DX
+    ; INT 15h, AH=86h: CX:DX = microseconds to wait
+    ; We get milliseconds in CX, convert to microseconds.
+    MOV  AX, CX
+    MOV  DX, 1000
+    MUL  DX               ; DX:AX = CX * 1000 = microseconds
+    MOV  CX, DX
+    MOV  DX, AX
+    MOV  AH, 86h
+    INT  15h
+    POP  DX
+    POP  CX
+    POP  AX
+    RET
+SND_DELAY ENDP
+
+;---------------------------------------------------------------
+; SND_PLAY_PATTERN — Play a pattern of (freq, duration_ms) pairs.
+; In: DS:SI = pattern data. Terminated by freq=0.
+;---------------------------------------------------------------
+SND_PLAY_PATTERN PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH SI
+
+SPP_LOOP:
+    MOV  BX, [SI]          ; frequency
+    OR   BX, BX
+    JZ   SPP_DONE
+    ADD  SI, 2
+    MOV  CX, [SI]          ; duration
+    ADD  SI, 2
+
+    CALL SND_PLAY_TONE
+    CALL SND_DELAY
+    CALL SND_SILENCE
+
+    ; Small gap between tones
+    MOV  CX, 30
+    CALL SND_DELAY
+
+    JMP  SPP_LOOP
+
+SPP_DONE:
+    CALL SND_SILENCE
+    POP  SI
+    POP  CX
+    POP  BX
+    POP  AX
+    RET
+SND_PLAY_PATTERN ENDP
+
+END
+```
+
+### Design Notes
+
+- **Why `INT 15h AH=86h` for timing?** More accurate than a BIOS tick busy-loop (which has ~55ms resolution). Especially matters for short tones.
+- **Patterns are data, not code.** `DATA.ASM` holds the frequency/duration arrays. `AUDIO.ASM` just plays them. So adding a new sound = adding data.
+- **Gap between tones.** Without the 30ms silence between notes, consecutive tones bleed into each other and sound like one garbled noise.
+- **DOSBox audio.** PC speaker emulation works fine in DOSBox. Make sure `pcspeaker=true` in `dosbox.conf`.
+
+### Integration Contract
+
+- **Inputs:** For `PLAY_PATTERN`: `DS:SI` pattern pointer. For `PLAY_TONE`: `BX` = freq.
+- **Outputs:** Speaker makes sound.
+- **Blocks:** `PLAY_PATTERN` blocks for the full pattern duration. Fine for MVP; the round flow tolerates it.
 
 ---
 
 ## 4.4 `FILEIO.ASM` — Leaderboard Persistence
 
 ### Purpose
+
 Load and save the top-5 leaderboard to `SCORES.DAT`.
 
 ### v1.2 Changes
+
 **Record format is unchanged.** The 8-byte record (Name 3B + Score 2B + Difficulty 1B + Pad 2B) remains the storage unit. **A 2-player match results in TWO calls to `FILE_INSERT_SCORE`** — once for each player. Each player competes for the same top-5 list independently. No mode flag needed on the record.
 
 ### Dependencies
+
 - `SHARED.INC`
 - `INT 21h` services
 
@@ -914,6 +1214,7 @@ Total file size: 5 × 8 = 40 bytes fixed.
 ```
 
 ### Structure
+
 Unchanged from v1.1. `FILE_INSERT_SCORE` still takes `(DS:SI=name, BX=score, AL=difficulty)` — `SCR_END_RUN` just calls it twice in 2P mode.
 
 ```asm
@@ -938,10 +1239,12 @@ Unchanged from v1.1. `FILE_INSERT_SCORE` still takes `(DS:SI=name, BX=score, AL=
 ```
 
 ### Design Notes
+
 - **Insertion order matters when scores tie:** insert P1 first, then P2. P1 takes precedence in tie-breaking under the current algorithm (first slot where existing < new). Document this in the help text if anyone asks.
 - **No format version bump needed.** v1.1 `.DAT` files remain compatible. If you wipe `SCORES.DAT` between v1.1 and v1.2 testing, do so manually.
 
 ### Integration Contract
+
 Unchanged from v1.1.
 
 ---
@@ -951,9 +1254,11 @@ Unchanged from v1.1.
 ## 5.1 `SCR_INTRO.ASM` — Title + Mode + Name + Difficulty + Instructions
 
 ### Purpose
+
 The "onboarding" sequence: title → **mode select (v1.2)** → name entry (loops in 2P) → difficulty → instructions.
 
 ### Screens Owned
+
 1. **`SCR_TITLE_RUN`** — show title + "press any key"
 2. **`SCR_MODE_RUN`** *(v1.2)* — 1P vs 2P selection
 3. **`SCR_NAME_RUN`** — read 3 initials per player (loops `NUM_PLAYERS` times)
@@ -961,6 +1266,7 @@ The "onboarding" sequence: title → **mode select (v1.2)** → name entry (loop
 5. **`SCR_INSTR_RUN`** — explain gameplay
 
 ### Dependencies
+
 - `GFX.ASM` (`GFX_LOAD_BG`, `GFX_DRAW_STRING`)
 - `INPUT.ASM`
 - `DATA.ASM`
@@ -1160,6 +1466,7 @@ END
 - **`CURRENT_PLAYER` is reset to 0 at the end of name entry** so it's ready for the round loop.
 
 ### Integration Contract
+
 - **Inputs:** Reads `STR_TITLE`, `STR_MODE_PROMPT`, etc., and all `BG_*` filename strings.
 - **Outputs:** Writes `PLAYER_NAMES`, `NUM_PLAYERS`, `CURRENT_PLAYER`, `DIFFICULTY`, updates `CURRENT_STATE`.
 
@@ -1168,13 +1475,16 @@ END
 ## 5.2 `SCR_GAME.ASM` — Main Gameplay Screen (1P + 2P)
 
 ### Purpose
+
 The heart of the game. Pick a word, show the sprite + sound, **collect answers from all `NUM_PLAYERS` players in sequence**, judge them together, update score/hearts, transition.
 
 ### Screens Owned
+
 1. **`SCR_ROUND_RUN`** — show sprite + play sound + loop through all players' answers
 2. **`SCR_JUDGE_RUN`** — judge each player's stored answer, update score/hearts, transition
 
 ### Dependencies
+
 - `GFX.ASM`, `AUDIO.ASM`, `INPUT.ASM`, `DATA.ASM`
 - External globals: `CURRENT_STATE`, `NUM_PLAYERS`, `CURRENT_PLAYER`, `CURRENT_WORD`, `DIFFICULTY`, `SCORES`, `HEARTS_ARR`, `PLAYER_RESULTS`, `PLAYER_TIMES`, `INPUT_BUFFER`
 
@@ -1375,6 +1685,7 @@ END
 - **The same word is shown to both players.** This is intentional per v1.2 design decision; P2's "advantage" of seeing P1 type is accepted.
 
 ### Integration Contract
+
 - **Inputs:** Reads `CURRENT_WORD`, `DIFFICULTY`, `NUM_PLAYERS`, word/sprite/sound tables.
 - **Outputs:** Updates `SCORES[]`, `HEARTS_ARR[]`, `PLAYER_RESULTS[]`, `PLAYER_TIMES[]`, `CURRENT_WORD`, `CURRENT_PLAYER`, `CURRENT_STATE`, `INPUT_BUFFER`.
 
@@ -1383,12 +1694,15 @@ END
 ## 5.3 `SCR_END.ASM` — Score + Leaderboard + Game Over
 
 ### Purpose
+
 Show final score(s), determine 2P winner if applicable, insert both players into leaderboard, display leaderboard, wait for key.
 
 ### Screens Owned
+
 1. **`SCR_END_RUN`** — final scores + winner banner (2P) + leaderboard + quit prompt
 
 ### Dependencies
+
 - `GFX.ASM`, `INPUT.ASM`, `FILEIO.ASM`
 - External globals: `CURRENT_STATE`, `NUM_PLAYERS`, `PLAYER_NAMES`, `SCORES`, `HEARTS_ARR`, `DIFFICULTY`, `LEADERBOARD`
 
@@ -1513,10 +1827,15 @@ END
 ### Design Notes
 
 - **Win condition is "all players still have hearts."** If any player hit 0, it's a GAME OVER — including in 2P even if the other player would have finished cleanly. Documented in 5.2.
+
 - **2P winner determination:** higher score wins. Tie shows `STR_TIE`. No tiebreak by hearts; just points.
+
 - **Leaderboard insertion order:** P1 first, then P2. Matters only on score ties — earlier insertion takes the slot.
+
 - **Number-to-ASCII conversion** for displaying scores is still Dev 1's task; standard `DIV 10` loop.
+
 - **Layout for 2P score display:** stacked is probably easier than side-by-side at 320×200. Suggested:
+  
   ```
   PLAYER 1: AAA — 240 PTS
   PLAYER 2: BBB — 180 PTS
@@ -1524,6 +1843,7 @@ END
   ```
 
 ### Integration Contract
+
 - **Inputs:** Reads `NUM_PLAYERS`, `SCORES[]`, `HEARTS_ARR[]`, `PLAYER_NAMES[]`, `DIFFICULTY`, `LEADERBOARD`.
 - **Outputs:** Modifies leaderboard (1 or 2 inserts), writes file, sets `CURRENT_STATE = STATE_QUIT`.
 
@@ -1533,27 +1853,28 @@ END
 
 ## 6.1 Module Integration Contracts
 
-| Module | Promises (outputs) | Requires (inputs) | Sets |
-|---|---|---|---|
-| `GAME_TICK` (STATE) | Runs one state's screen | `CURRENT_STATE` valid | — |
-| `GFX_INIT` | Mode 13h active, `ES=A000h` | — | Video mode |
-| `GFX_LOAD_BG` *(v1.2)* | Framebuffer filled from disk | `DS:DX`=filename | Video memory, `ES=A000h` |
-| `GFX_DRAW_SPRITE` | 32×32 sprite drawn (transparent color 0) | `DS:SI`=sprite, `BX,DX`=pos | Video memory |
-| `SND_PLAY_PATTERN` | Pattern played to completion | `DS:SI`=pattern | Speaker, time |
-| `INP_READ_STRING` | Null-term'd uppercase string | `ES:DI`=buf, `CX`=max | Buffer, `CX`=len |
-| `FILE_LOAD_SCORES` | Leaderboard populated | `SCORES.DAT` (optional) | `LEADERBOARD` |
-| `FILE_SAVE_SCORES` | Leaderboard persisted | `LEADERBOARD` valid | `SCORES.DAT` |
-| `FILE_INSERT_SCORE` | Entry inserted if qualifies | `DS:SI`=name, `BX`=score, `AL`=difficulty | `LEADERBOARD` sorted |
-| `SCR_MODE_RUN` *(v1.2)* | Mode selected | `STR_MODE_*` strings | `NUM_PLAYERS`, state |
-| `SCR_NAME_RUN` *(v1.2)* | One player's name read | `CURRENT_PLAYER` valid | `PLAYER_NAMES[CP]`, state |
-| `SCR_DIFF_RUN` | Difficulty selected | `STR_DIFF_*` strings | `DIFFICULTY`, state |
-| `SCR_ROUND_RUN` *(v1.2)* | Round played for all `NUM_PLAYERS` | `CURRENT_WORD`, `DIFFICULTY`, `NUM_PLAYERS` | `PLAYER_RESULTS[]`, `PLAYER_TIMES[]`, state |
-| `SCR_JUDGE_RUN` *(v1.2)* | All players' scores/hearts updated | `PLAYER_RESULTS[]`, `PLAYER_TIMES[]` | `SCORES[]`, `HEARTS_ARR[]`, `CURRENT_WORD`, state |
-| `SCR_END_RUN` *(v1.2)* | Both players inserted; result shown | `SCORES[]`, `HEARTS_ARR[]`, `NUM_PLAYERS` | Leaderboard file, state |
+| Module                   | Promises (outputs)                       | Requires (inputs)                           | Sets                                              |
+| ------------------------ | ---------------------------------------- | ------------------------------------------- | ------------------------------------------------- |
+| `GAME_TICK` (STATE)      | Runs one state's screen                  | `CURRENT_STATE` valid                       | —                                                 |
+| `GFX_INIT`               | Mode 13h active, `ES=A000h`              | —                                           | Video mode                                        |
+| `GFX_LOAD_BG` *(v1.2)*   | Framebuffer filled from disk             | `DS:DX`=filename                            | Video memory, `ES=A000h`                          |
+| `GFX_DRAW_SPRITE`        | 32×32 sprite drawn (transparent color 0) | `DS:SI`=sprite, `BX,DX`=pos                 | Video memory                                      |
+| `SND_PLAY_PATTERN`       | Pattern played to completion             | `DS:SI`=pattern                             | Speaker, time                                     |
+| `INP_READ_STRING`        | Null-term'd uppercase string             | `ES:DI`=buf, `CX`=max                       | Buffer, `CX`=len                                  |
+| `FILE_LOAD_SCORES`       | Leaderboard populated                    | `SCORES.DAT` (optional)                     | `LEADERBOARD`                                     |
+| `FILE_SAVE_SCORES`       | Leaderboard persisted                    | `LEADERBOARD` valid                         | `SCORES.DAT`                                      |
+| `FILE_INSERT_SCORE`      | Entry inserted if qualifies              | `DS:SI`=name, `BX`=score, `AL`=difficulty   | `LEADERBOARD` sorted                              |
+| `SCR_MODE_RUN` *(v1.2)*  | Mode selected                            | `STR_MODE_*` strings                        | `NUM_PLAYERS`, state                              |
+| `SCR_NAME_RUN` *(v1.2)*  | One player's name read                   | `CURRENT_PLAYER` valid                      | `PLAYER_NAMES[CP]`, state                         |
+| `SCR_DIFF_RUN`           | Difficulty selected                      | `STR_DIFF_*` strings                        | `DIFFICULTY`, state                               |
+| `SCR_ROUND_RUN` *(v1.2)* | Round played for all `NUM_PLAYERS`       | `CURRENT_WORD`, `DIFFICULTY`, `NUM_PLAYERS` | `PLAYER_RESULTS[]`, `PLAYER_TIMES[]`, state       |
+| `SCR_JUDGE_RUN` *(v1.2)* | All players' scores/hearts updated       | `PLAYER_RESULTS[]`, `PLAYER_TIMES[]`        | `SCORES[]`, `HEARTS_ARR[]`, `CURRENT_WORD`, state |
+| `SCR_END_RUN` *(v1.2)*   | Both players inserted; result shown      | `SCORES[]`, `HEARTS_ARR[]`, `NUM_PLAYERS`   | Leaderboard file, state                           |
 
 ## 6.2 Testing Strategy
 
 ### Per-Module Smoke Tests
+
 Same approach as v1.1. Keep test mains in `tests/`. For v1.2 specifically:
 
 - **`tests/test_GFX_BG.asm`** — `GFX_INIT`, `GFX_LOAD_BG('TITLE.BIN')`, wait key, `GFX_SHUTDOWN`. Verifies disk-loaded backgrounds work.
@@ -1561,18 +1882,18 @@ Same approach as v1.1. Keep test mains in `tests/`. For v1.2 specifically:
 
 ### Integration Checkpoints (revised v1.2 timeline)
 
-| Day | Checkpoint | Demo |
-|---|---|---|
-| 1 | Hello world builds & runs | `.EXE` prints "HELLO" and exits |
-| 2 | Graphics module works standalone | Test main draws 1 sprite per tier, exits |
-| 3 | **Background loading works** *(v1.2)* | `GFX_LOAD_BG` renders TITLE.BIN visibly |
-| 4 | Audio + Input + File I/O standalone | Audio plays one pattern; name read; leaderboard saved |
-| 5 | **Intro flow integrated (Title → Mode → Name(×N) → Diff → Instr)** | Walk through intro in both 1P and 2P |
-| 6 | **Round + Judge integrated (1P first, then 2P)** | Play a complete 1P game; then 2P |
-| 7 | End screen + leaderboard | Full game end-to-end with both players persisted |
-| 8 | Bug bash | Cross-mode regressions, font-on-bg transparency |
-| 9 | Polish + demo prep | — |
-| 10 | Buffer day | — |
+| Day | Checkpoint                                                         | Demo                                                  |
+| --- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| 1   | Hello world builds & runs                                          | `.EXE` prints "HELLO" and exits                       |
+| 2   | Graphics module works standalone                                   | Test main draws 1 sprite per tier, exits              |
+| 3   | **Background loading works** *(v1.2)*                              | `GFX_LOAD_BG` renders TITLE.BIN visibly               |
+| 4   | Audio + Input + File I/O standalone                                | Audio plays one pattern; name read; leaderboard saved |
+| 5   | **Intro flow integrated (Title → Mode → Name(×N) → Diff → Instr)** | Walk through intro in both 1P and 2P                  |
+| 6   | **Round + Judge integrated (1P first, then 2P)**                   | Play a complete 1P game; then 2P                      |
+| 7   | End screen + leaderboard                                           | Full game end-to-end with both players persisted      |
+| 8   | Bug bash                                                           | Cross-mode regressions, font-on-bg transparency       |
+| 9   | Polish + demo prep                                                 | —                                                     |
+| 10  | Buffer day                                                         | —                                                     |
 
 ### Common Bugs to Watch For (v1.2 additions)
 
@@ -1585,19 +1906,19 @@ Same approach as v1.1. Keep test mains in `tests/`. For v1.2 specifically:
 
 ## 6.3 Known Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| Font rendering forgets transparency, overlays go opaque on bg | **High** | **High** | **Code review the inner glyph loop. Test on a non-black background BEFORE integrating with other screens.** |
-| Spriter can't deliver 30 sprites + 7 backgrounds | **High** | **High** | Talk today. Fallback: 4 backgrounds (TITLE, ROUND, END, INSTR — reuse for others), 6-8 sprites per tier. |
-| Background `.BIN` missing at runtime | Medium | Medium | Add a "missing file" log in `GFX_LOAD_BG` error path. Or just visual-test all screens Day 5. |
-| Player array index bugs | Medium | High | Standardize the indexing macro early (`PLAYER_BYTE`, `PLAYER_WORD`); code review every use. |
-| 2P "game ends when either player out of hearts" feels unfair to surviving player | Medium | Low | Document as known limitation. If prof objects, change to per-player end-tracking (~half a day). |
-| Audio doesn't play in DOSBox | Low | High | Check `pcspeaker=true` in `dosbox.conf`. Test Day 2. |
-| Teammate flakes | Medium | Medium | v1.2 increased Dev 1 load. If Dev 3 drops, prioritize: 1P-only fallback ships first, 2P is "polish." |
-| Scope creep | **Very High** | **Very High** | v1.2 already absorbed the prof's two requests. Hard freeze on additions. `POLISH_IDEAS.txt` only. |
-| Data segment overflow | Low | Critical | ~33KB total — still safe. Backgrounds NOT in data segment. Don't change this. |
-| Integration day reveals misaligned contracts | High | Medium | Standups Days 2, 4, 6. Each dev demos. |
-| Background images look bad / non-cohesive | Medium | Low | Spriter and Dev 1 align on visual style Day 1 (palette choices, theme). |
+| Risk                                                                             | Likelihood    | Impact        | Mitigation                                                                                                  |
+| -------------------------------------------------------------------------------- | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------- |
+| Font rendering forgets transparency, overlays go opaque on bg                    | **High**      | **High**      | **Code review the inner glyph loop. Test on a non-black background BEFORE integrating with other screens.** |
+| Spriter can't deliver 30 sprites + 7 backgrounds                                 | **High**      | **High**      | Talk today. Fallback: 4 backgrounds (TITLE, ROUND, END, INSTR — reuse for others), 6-8 sprites per tier.    |
+| Background `.BIN` missing at runtime                                             | Medium        | Medium        | Add a "missing file" log in `GFX_LOAD_BG` error path. Or just visual-test all screens Day 5.                |
+| Player array index bugs                                                          | Medium        | High          | Standardize the indexing macro early (`PLAYER_BYTE`, `PLAYER_WORD`); code review every use.                 |
+| 2P "game ends when either player out of hearts" feels unfair to surviving player | Medium        | Low           | Document as known limitation. If prof objects, change to per-player end-tracking (~half a day).             |
+| Audio doesn't play in DOSBox                                                     | Low           | High          | Check `pcspeaker=true` in `dosbox.conf`. Test Day 2.                                                        |
+| Teammate flakes                                                                  | Medium        | Medium        | v1.2 increased Dev 1 load. If Dev 3 drops, prioritize: 1P-only fallback ships first, 2P is "polish."        |
+| Scope creep                                                                      | **Very High** | **Very High** | v1.2 already absorbed the prof's two requests. Hard freeze on additions. `POLISH_IDEAS.txt` only.           |
+| Data segment overflow                                                            | Low           | Critical      | ~33KB total — still safe. Backgrounds NOT in data segment. Don't change this.                               |
+| Integration day reveals misaligned contracts                                     | High          | Medium        | Standups Days 2, 4, 6. Each dev demos.                                                                      |
+| Background images look bad / non-cohesive                                        | Medium        | Low           | Spriter and Dev 1 align on visual style Day 1 (palette choices, theme).                                     |
 
 ---
 
@@ -1643,6 +1964,7 @@ Unchanged from v1.1.
 **Pending:** Study Guide update — see `STUDY_GUIDE.md`
 
 **Update this doc when:**
+
 - A module's procedure signature changes
 - A new screen or state is added
 - Memory layout changes
