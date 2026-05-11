@@ -6,7 +6,7 @@ echo ========================================
 if not exist build mkdir build
 if not exist bin mkdir bin
 
-if "%1"=="test_MAIN" goto TEST_MAIN
+if "%1"=="TSTMAIN" goto TEST_MAIN
 if "%1"=="TEST_ST" goto TEST_ST
 if "%1"=="TEST_DT" goto TEST_DT
 if "%1"=="TEST_GFX" goto TEST_GFX
@@ -15,8 +15,10 @@ if "%1"=="TEST_INP" goto TEST_INP
 REM ============================================
 REM Assemble each module to .OBJ
 REM ============================================
-tasm /zi /isrc src\MAIN.ASM, build\MAIN.OBJ
+tasm /zi /isrc src\MAIN.ASM
 if errorlevel 1 goto FAIL
+copy MAIN.OBJ build\MAIN.OBJ >nul
+del MAIN.OBJ
 tasm /zi /isrc src\GFX.ASM, build\GFX.OBJ
 REM TODO: Day 3 — uncomment when AUDIO smoke test passes
 REM tasm /zi /isrc src\AUDIO.ASM, build\AUDIO.OBJ
@@ -45,19 +47,29 @@ goto DONE
 
 :TEST_MAIN
 echo Building smoke test: MAIN
-tasm /zi /isrc tests\test_MAIN.asm, build\TEST_MAIN.OBJ
+tasm /zi /isrc tests\TSTMAIN.ASM
 if errorlevel 1 goto FAIL
-tlink /v build\TEST_MAIN.OBJ, bin\TEST_MAIN.EXE
+copy TSTMAIN.OBJ build\TSTMAIN.OBJ >nul
+del TSTMAIN.OBJ
+tasm /zi /isrc src\MAIN.ASM
 if errorlevel 1 goto FAIL
-echo Build complete: bin\TEST_MAIN.EXE
+copy MAIN.OBJ build\MAIN.OBJ >nul
+del MAIN.OBJ
+tlink /v build\TSTMAIN.OBJ+build\MAIN.OBJ, bin\TSTMAIN.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TSTMAIN.EXE
 goto DONE
 
 :TEST_ST
 echo Building smoke test: STATE
-tasm /zi /isrc tests\TEST_ST.ASM, build\TEST_ST.OBJ
+tasm /zi /isrc tests\TEST_ST.ASM
 if errorlevel 1 goto FAIL
-tasm /zi /isrc src\STATE.ASM, build\STATE.OBJ
+copy TEST_ST.OBJ build\TEST_ST.OBJ >nul
+del TEST_ST.OBJ
+tasm /zi /isrc src\STATE.ASM
 if errorlevel 1 goto FAIL
+copy STATE.OBJ build\STATE.OBJ >nul
+del STATE.OBJ
 tlink /v build\TEST_ST.OBJ+build\STATE.OBJ, bin\TEST_ST.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_ST.EXE

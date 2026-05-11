@@ -13,6 +13,11 @@
     EXTRN TIER_TABLE:WORD
     EXTRN SPRITE_TABLE:BYTE
     EXTRN SOUND_TABLE:WORD
+    EXTRN STR_MODE_PROMPT:BYTE, STR_1P:BYTE, STR_2P:BYTE
+    EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE, STR_YOUR_TURN:BYTE
+    EXTRN STR_VS:BYTE, STR_WINNER:BYTE, STR_TIE:BYTE
+    EXTRN BG_TITLE:BYTE, BG_MODE:BYTE, BG_NAME:BYTE
+    EXTRN BG_DIFF:BYTE, BG_INSTR:BYTE, BG_ROUND:BYTE, BG_END:BYTE
 
     MSG_HEADER  DB 'DATA.ASM Smoke Test', 0Dh, 0Ah
                 DB '===================', 0Dh, 0Ah, '$'
@@ -23,6 +28,8 @@
     MSG_FAIL    DB ' [FAIL]', 0Dh, 0Ah, '$'
     MSG_SPRITE  DB 'SPRITE TABLE:   $'
     MSG_SOUND   DB 'SOUND TABLE:    $'
+    MSG_2PSTR   DB 'V1.2 UI STRINGS:$'
+    MSG_BG      DB 'V1.2 BG FILES:  $'
     MSG_DONE    DB '===================', 0Dh, 0Ah
                 DB 'ALL TESTS PASSED', 0Dh, 0Ah, '$'
 
@@ -142,6 +149,58 @@ L8: CMP WORD PTR [SI], 784
 L9: MOV AH, 09h
     LEA DX, MSG_PASS
     INT 21h
+
+    ; ============================================================
+    ; Test 5: V1.2 2-PLAYER UI STRINGS — accessible and correct
+    ; ============================================================
+    MOV AH, 09h
+    LEA DX, MSG_2PSTR
+    INT 21h
+    CMP BYTE PTR [STR_MODE_PROMPT], 'C'
+    JNE T5_FAIL
+    CMP BYTE PTR [STR_PLAYER1+7], '1'
+    JNE T5_FAIL
+    CMP BYTE PTR [STR_PLAYER2+7], '2'
+    JNE T5_FAIL
+    CMP BYTE PTR [STR_WINNER], 'W'
+    JNE T5_FAIL
+    MOV AH, 09h
+    LEA DX, MSG_PASS
+    INT 21h
+    JMP T6
+
+T5_FAIL:
+    MOV AH, 09h
+    LEA DX, MSG_FAIL
+    INT 21h
+    JMP DONE_FAIL
+
+T6:
+    ; ============================================================
+    ; Test 6: V1.2 BACKGROUND FILENAMES — accessible and non-empty
+    ; ============================================================
+    MOV AH, 09h
+    LEA DX, MSG_BG
+    INT 21h
+    CMP BYTE PTR [BG_TITLE], 'T'
+    JNE T6_FAIL
+    CMP BYTE PTR [BG_MODE], 'M'
+    JNE T6_FAIL
+    CMP BYTE PTR [BG_NAME], 'N'
+    JNE T6_FAIL
+    CMP BYTE PTR [BG_END], 'E'
+    JNE T6_FAIL
+    MOV AH, 09h
+    LEA DX, MSG_PASS
+    INT 21h
+    JMP T6_DONE
+
+T6_FAIL:
+    MOV AH, 09h
+    LEA DX, MSG_FAIL
+    INT 21h
+    JMP DONE_FAIL
+T6_DONE:
 
     ; ============================================================
     ; All tests passed

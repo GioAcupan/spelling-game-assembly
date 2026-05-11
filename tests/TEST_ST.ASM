@@ -11,14 +11,15 @@
 
     MSG_STATE   DB 'State: $'
     MSG_OK      DB ' OK', 0Dh, 0Ah, '$'
-    MSG_QUIT    DB 'State QUIT: RET (no call) OK', 0Dh, 0Ah, '$'
+    MSG_QUIT    DB 'State QUIT (8): RET (no call) OK', 0Dh, 0Ah, '$'
 
 .CODE
     EXTRN GAME_TICK:PROC
 
     ; --- Stub screen handlers ---
     ; Each prints its state digit then returns.
-    PUBLIC SCR_TITLE_RUN, SCR_NAME_RUN, SCR_DIFF_RUN
+    PUBLIC SCR_TITLE_RUN, SCR_MODE_RUN
+    PUBLIC SCR_NAME_RUN, SCR_DIFF_RUN
     PUBLIC SCR_INSTR_RUN, SCR_ROUND_RUN, SCR_JUDGE_RUN, SCR_END_RUN
 
 SCR_TITLE_RUN PROC
@@ -31,6 +32,17 @@ SCR_TITLE_RUN PROC
     POP AX
     RET
 SCR_TITLE_RUN ENDP
+
+SCR_MODE_RUN PROC
+    PUSH AX
+    PUSH DX
+    MOV AH, 02h
+    MOV DL, 'M'
+    INT 21h
+    POP DX
+    POP AX
+    RET
+SCR_MODE_RUN ENDP
 
 SCR_NAME_RUN PROC
     PUSH AX
@@ -103,7 +115,7 @@ MAIN PROC
     MOV AX, @DATA
     MOV DS, AX
 
-    ; Test state 0 (TITLE)
+    ; Test TITLE (STATE_TITLE=0)
     MOV CURRENT_STATE, STATE_TITLE
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -113,7 +125,17 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 1 (NAME)
+    ; Test MODE (STATE_MODE=1) — v1.2
+    MOV CURRENT_STATE, STATE_MODE
+    LEA DX, MSG_STATE
+    MOV AH, 09h
+    INT 21h
+    CALL GAME_TICK
+    LEA DX, MSG_OK
+    MOV AH, 09h
+    INT 21h
+
+    ; Test NAME (STATE_NAME=2)
     MOV CURRENT_STATE, STATE_NAME
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -123,7 +145,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 2 (DIFF)
+    ; Test DIFF (STATE_DIFF=3)
     MOV CURRENT_STATE, STATE_DIFF
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -133,7 +155,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 3 (INSTR)
+    ; Test INSTR (STATE_INSTR=4)
     MOV CURRENT_STATE, STATE_INSTR
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -143,7 +165,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 4 (ROUND)
+    ; Test ROUND (STATE_ROUND=5)
     MOV CURRENT_STATE, STATE_ROUND
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -153,7 +175,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 5 (JUDGE)
+    ; Test JUDGE (STATE_JUDGE=6)
     MOV CURRENT_STATE, STATE_JUDGE
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -163,7 +185,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 6 (END)
+    ; Test END (STATE_END=7)
     MOV CURRENT_STATE, STATE_END
     LEA DX, MSG_STATE
     MOV AH, 09h
@@ -173,7 +195,7 @@ MAIN PROC
     MOV AH, 09h
     INT 21h
 
-    ; Test state 7 (QUIT) — should fall through, no handler called
+    ; Test QUIT (STATE_QUIT=8) — should fall through, no handler called
     MOV CURRENT_STATE, STATE_QUIT
     LEA DX, MSG_QUIT
     MOV AH, 09h

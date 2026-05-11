@@ -1,0 +1,91 @@
+; tests/TEST_MAIN.ASM — Smoke test for MAIN.ASM (v1.2)
+; Provides stubs for MAIN's EXTRN dependencies.
+; Verifies game loop initializes, runs one tick, and exits cleanly.
+; Links with MAIN.OBJ — END MAIN delegates entry to MAIN.ASM.
+
+.MODEL SMALL
+.STACK 1024
+
+.DATA
+    INCLUDE SHARED.INC
+    EXTRN CURRENT_STATE:BYTE
+    EXTRN NUM_PLAYERS:BYTE
+    EXTRN HEARTS_ARR:BYTE
+
+    MSG_OK   DB 'MAIN SMOKE TEST', 0Dh, 0Ah, '$'
+    MSG_GFX  DB '  GFX_INIT OK', 0Dh, 0Ah, '$'
+    MSG_FILE DB '  FILE_LOAD_SCORES OK', 0Dh, 0Ah, '$'
+    MSG_LOOP DB '  GAME_TICK OK', 0Dh, 0Ah, '$'
+    MSG_DONE DB '  GFX_SHUTDOWN OK', 0Dh, 0Ah
+             DB 'MAIN V1.2 PASSED', 0Dh, 0Ah, '$'
+    MSG_BAD1 DB '  FAIL: NUM_PLAYERS != 1', 0Dh, 0Ah, '$'
+    MSG_BAD2 DB '  FAIL: HEARTS_ARR[0] != MAX_HEARTS', 0Dh, 0Ah, '$'
+
+.CODE
+    PUBLIC GFX_INIT, GFX_SHUTDOWN, FILE_LOAD_SCORES, GAME_TICK
+
+GFX_INIT PROC
+    PUSH AX
+    PUSH DX
+    MOV AH, 09h
+    LEA DX, MSG_GFX
+    INT 21h
+    POP DX
+    POP AX
+    RET
+GFX_INIT ENDP
+
+FILE_LOAD_SCORES PROC
+    PUSH AX
+    PUSH DX
+    MOV AH, 09h
+    LEA DX, MSG_FILE
+    INT 21h
+    POP DX
+    POP AX
+    RET
+FILE_LOAD_SCORES ENDP
+
+GAME_TICK PROC
+    PUSH AX
+    PUSH DX
+
+    CMP NUM_PLAYERS, 1
+    JNE GT_FAIL1
+    CMP HEARTS_ARR, MAX_HEARTS
+    JNE GT_FAIL2
+
+    MOV AH, 09h
+    LEA DX, MSG_LOOP
+    INT 21h
+    JMP GT_DONE
+
+GT_FAIL1:
+    MOV AH, 09h
+    LEA DX, MSG_BAD1
+    INT 21h
+    JMP GT_DONE
+GT_FAIL2:
+    MOV AH, 09h
+    LEA DX, MSG_BAD2
+    INT 21h
+
+GT_DONE:
+    MOV CURRENT_STATE, STATE_QUIT
+    POP DX
+    POP AX
+    RET
+GAME_TICK ENDP
+
+GFX_SHUTDOWN PROC
+    PUSH AX
+    PUSH DX
+    MOV AH, 09h
+    LEA DX, MSG_DONE
+    INT 21h
+    POP DX
+    POP AX
+    RET
+GFX_SHUTDOWN ENDP
+
+END

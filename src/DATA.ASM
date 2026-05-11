@@ -60,6 +60,8 @@ TIER_TABLE DW OFFSET EASY_WORDS    ; DIFF_EASY = 0
     DW OFFSET HARD_WORDS    ; DIFF_HARD = 2
 
     ; [TEST 2] SOUND PATTERNS + SOUND_TABLE commented out — testing OFFSET hypothesis
+    ; TODO: v1.2 spec requires 30 sound patterns (one per word), each a sequence
+    ;       of (frequency, duration_ms) pairs terminated by freq=0.
 PUBLIC SOUND_TABLE
 SOUND_TABLE DW 0
 
@@ -68,6 +70,10 @@ SOUND_TABLE DW 0
     ; ================================================================
     PUBLIC STR_TITLE, STR_INSTR, STR_GAMEOVER, STR_WIN
     PUBLIC STR_DIFF_PROMPT, STR_EASY, STR_MED, STR_HARD
+    PUBLIC STR_MODE_PROMPT, STR_1P, STR_2P
+    PUBLIC STR_PLAYER1, STR_PLAYER2, STR_YOUR_TURN
+    PUBLIC STR_VS, STR_WINNER, STR_TIE
+    PUBLIC BG_TITLE, BG_MODE, BG_NAME, BG_DIFF, BG_INSTR, BG_ROUND, BG_END
 
 STR_TITLE       DB 'SPELLING FUN!',0
 STR_INSTR       DB 'TYPE WHAT YOU HEAR. PRESS ENTER.',0
@@ -77,8 +83,31 @@ STR_DIFF_PROMPT DB 'CHOOSE DIFFICULTY:',0
 STR_EASY        DB '1. EASY',0
 STR_MED         DB '2. MEDIUM',0
 STR_HARD        DB '3. HARD',0
+
+    ; --- 2-player UI strings (v1.2) ---
+STR_MODE_PROMPT DB 'CHOOSE MODE:',0
+STR_1P          DB '1. ONE PLAYER',0
+STR_2P          DB '2. TWO PLAYERS',0
+STR_PLAYER1     DB 'PLAYER 1',0
+STR_PLAYER2     DB 'PLAYER 2',0
+STR_YOUR_TURN   DB 'YOUR TURN!',0
+STR_VS          DB ' VS ',0
+STR_WINNER      DB 'WINNER: ',0
+STR_TIE         DB 'ITS A TIE!',0
+
+    ; --- Background filenames (v1.2) ---
+BG_TITLE  DB 'TITLE.BIN',0
+BG_MODE   DB 'MODE.BIN',0
+BG_NAME   DB 'NAME.BIN',0
+BG_DIFF   DB 'DIFF.BIN',0
+BG_INSTR  DB 'INSTR.BIN',0
+BG_ROUND  DB 'ROUND.BIN',0
+BG_END    DB 'END.BIN',0
+
     ; ================================================================
     ; SPRITE TABLE — [TEST 3] stub, 30KB sprite data removed
+    ; TODO: v1.2 spec requires 30 sprites (10 per tier), each 32x32,
+    ;       exported as raw byte arrays and pasted here.
     ; ================================================================
     PUBLIC SPRITE_TABLE
 SPRITE_TABLE DB 0
