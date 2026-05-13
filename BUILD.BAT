@@ -14,6 +14,8 @@ if "%1"=="TEST_INP" goto TEST_INP
 if "%1"=="TEST_AUD" goto TEST_AUD
 if "%1"=="TEST_FIO" goto TEST_FIO
 if "%1"=="TEST_SCI" goto TEST_SCI
+if "%1"=="TEST_SG" goto TEST_SG
+if "%1"=="TEST_SE" goto TEST_SE
 
 REM ============================================
 REM Assemble each module to .OBJ
@@ -23,26 +25,32 @@ if errorlevel 1 goto FAIL
 copy MAIN.OBJ build\MAIN.OBJ >nul
 del MAIN.OBJ
 tasm /zi /isrc src\GFX.ASM, build\GFX.OBJ
-REM TODO: Day 3 — uncomment when AUDIO smoke test passes
-REM tasm /zi /isrc src\AUDIO.ASM, build\AUDIO.OBJ
+tasm /zi /isrc src\AUDIO.ASM, build\AUDIO.OBJ
 tasm /zi /isrc src\INPUT.ASM, build\INPUT.OBJ
-REM TODO: Day 4 — uncomment when FILEIO smoke test passes
-REM tasm /zi /isrc src\FILEIO.ASM, build\FILEIO.OBJ
-REM TODO: Day 5 — uncomment when STATE smoke test passes
-REM tasm /zi /isrc src\STATE.ASM, build\STATE.OBJ
+tasm /zi /isrc src\FILEIO.ASM, build\FILEIO.OBJ
+tasm /zi /isrc src\STATE.ASM, build\STATE.OBJ
 tasm /zi /isrc src\DATA.ASM, build\DATA.OBJ
-REM TODO: Day 5 — uncomment when screen modules pass
-REM tasm /zi /isrc src\SCRINTRO.ASM, build\SCRINTRO.OBJ
-REM tasm /zi /isrc src\SCR_GAME.ASM, build\SCR_GAME.OBJ
-REM tasm /zi /isrc src\SCR_END.ASM, build\SCR_END.OBJ
+tasm /zi /isrc src\SCRINTRO.ASM, build\SCRINTRO.OBJ
+tasm /zi /isrc src\SCR_GAME.ASM, build\SCR_GAME.OBJ
+tasm /zi /isrc src\SCR_END.ASM, build\SCR_END.OBJ
 
 REM ============================================
 REM Link all .OBJ files into SPELL.EXE
-REM Only include modules whose smoke tests pass
+REM Response file avoids DOS 127-char command tail limit
 REM ============================================
-tlink /v build\MAIN.OBJ, bin\SPELL.EXE
-REM TODO: Add modules as they pass: +build\GFX.OBJ+build\AUDIO.OBJ+...
+ECHO build\MAIN.OBJ+>build\SPELL.LNK
+ECHO build\GFX.OBJ+>>build\SPELL.LNK
+ECHO build\INPUT.OBJ+>>build\SPELL.LNK
+ECHO build\DATA.OBJ+>>build\SPELL.LNK
+ECHO build\AUDIO.OBJ+>>build\SPELL.LNK
+ECHO build\FILEIO.OBJ+>>build\SPELL.LNK
+ECHO build\STATE.OBJ+>>build\SPELL.LNK
+ECHO build\SCRINTRO.OBJ+>>build\SPELL.LNK
+ECHO build\SCR_GAME.OBJ+>>build\SPELL.LNK
+ECHO build\SCR_END.OBJ,bin\SPELL.EXE>>build\SPELL.LNK
+tlink /v @build\SPELL.LNK
 if errorlevel 1 goto FAIL
+DEL build\SPELL.LNK >nul
 
 echo.
 echo Build complete: bin\SPELL.EXE
@@ -204,6 +212,87 @@ tlink /v @build\TEST_SCI.LNK
 if errorlevel 1 goto FAIL
 DEL build\TEST_SCI.LNK >nul
 echo Build complete: bin\TEST_SCI.EXE
+goto DONE
+
+:TEST_SG
+echo Building smoke test: SCR_GAME
+tasm /zi /isrc tests\TEST_SG.ASM
+if errorlevel 1 goto FAIL
+copy TEST_SG.OBJ build\TEST_SG.OBJ >nul
+del TEST_SG.OBJ
+tasm /zi /isrc src\SCR_GAME.ASM
+if errorlevel 1 goto FAIL
+copy SCR_GAME.OBJ build\SCR_GAME.OBJ >nul
+del SCR_GAME.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tasm /zi /isrc src\INPUT.ASM
+if errorlevel 1 goto FAIL
+copy INPUT.OBJ build\INPUT.OBJ >nul
+del INPUT.OBJ
+tasm /zi /isrc src\AUDIO.ASM
+if errorlevel 1 goto FAIL
+copy AUDIO.OBJ build\AUDIO.OBJ >nul
+del AUDIO.OBJ
+tasm /zi /isrc src\DATA.ASM
+if errorlevel 1 goto FAIL
+copy DATA.OBJ build\DATA.OBJ >nul
+del DATA.OBJ
+ECHO build\TEST_SG.OBJ+>build\TEST_SG.LNK
+ECHO build\SCR_GAME.OBJ+>>build\TEST_SG.LNK
+ECHO build\GFX.OBJ+>>build\TEST_SG.LNK
+ECHO build\INPUT.OBJ+>>build\TEST_SG.LNK
+ECHO build\AUDIO.OBJ+>>build\TEST_SG.LNK
+ECHO build\DATA.OBJ,bin\TEST_SG.EXE>>build\TEST_SG.LNK
+tlink /v @build\TEST_SG.LNK
+if errorlevel 1 goto FAIL
+DEL build\TEST_SG.LNK >nul
+echo Build complete: bin\TEST_SG.EXE
+goto DONE
+
+:TEST_SE
+echo Building smoke test: SCR_END
+tasm /zi /isrc tests\TEST_SE.ASM
+if errorlevel 1 goto FAIL
+copy TEST_SE.OBJ build\TEST_SE.OBJ >nul
+del TEST_SE.OBJ
+tasm /zi /isrc src\SCR_END.ASM
+if errorlevel 1 goto FAIL
+copy SCR_END.OBJ build\SCR_END.OBJ >nul
+del SCR_END.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tasm /zi /isrc src\INPUT.ASM
+if errorlevel 1 goto FAIL
+copy INPUT.OBJ build\INPUT.OBJ >nul
+del INPUT.OBJ
+tasm /zi /isrc src\AUDIO.ASM
+if errorlevel 1 goto FAIL
+copy AUDIO.OBJ build\AUDIO.OBJ >nul
+del AUDIO.OBJ
+tasm /zi /isrc src\FILEIO.ASM
+if errorlevel 1 goto FAIL
+copy FILEIO.OBJ build\FILEIO.OBJ >nul
+del FILEIO.OBJ
+tasm /zi /isrc src\DATA.ASM
+if errorlevel 1 goto FAIL
+copy DATA.OBJ build\DATA.OBJ >nul
+del DATA.OBJ
+ECHO build\TEST_SE.OBJ+>build\TEST_SE.LNK
+ECHO build\SCR_END.OBJ+>>build\TEST_SE.LNK
+ECHO build\GFX.OBJ+>>build\TEST_SE.LNK
+ECHO build\INPUT.OBJ+>>build\TEST_SE.LNK
+ECHO build\AUDIO.OBJ+>>build\TEST_SE.LNK
+ECHO build\FILEIO.OBJ+>>build\TEST_SE.LNK
+ECHO build\DATA.OBJ,bin\TEST_SE.EXE>>build\TEST_SE.LNK
+tlink /v @build\TEST_SE.LNK
+if errorlevel 1 goto FAIL
+DEL build\TEST_SE.LNK >nul
+echo Build complete: bin\TEST_SE.EXE
 goto DONE
 
 :FAIL

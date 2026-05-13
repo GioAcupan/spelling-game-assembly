@@ -51,6 +51,44 @@ HARD_WORDS DB 'ORANGE',0,  9 DUP(0) ; index 0
     DB 'DOLPHIN',0, 8 DUP(0) ; index 9
 
     ; ================================================================
+    ; SCRAMBLE TABLE — 30 scrambled words (v1.4)
+    ; Same stride as word lists: WORD_RECORD_SIZE (16 bytes)
+    ; Index: DIFFICULTY * WORDS_PER_TIER + CURRENT_WORD
+    ; Each entry is a hardcoded scramble — distinct from original,
+    ; length-matched, ideally not a real word.
+    ; ================================================================
+SCRAMBLE_TABLE DB 'ATC',0, 12 DUP(0)       ; CAT
+    DB 'ODG',0, 12 DUP(0)       ; DOG
+    DB 'GGE',0, 12 DUP(0)       ; EGG
+    DB 'NSU',0, 12 DUP(0)       ; SUN
+    DB 'ATH',0, 12 DUP(0)       ; HAT
+    DB 'GBA',0, 12 DUP(0)       ; BAG
+    DB 'PCU',0, 12 DUP(0)       ; CUP
+    DB 'IPG',0, 12 DUP(0)       ; PIG
+    DB 'NEH',0, 12 DUP(0)       ; HEN
+    DB 'TNA',0, 12 DUP(0)       ; ANT
+    DB 'PAPEL',0,  10 DUP(0)    ; APPLE
+    DB 'PAGER',0,  10 DUP(0)    ; GRAPE
+    DB 'ARTNI',0,  10 DUP(0)    ; TRAIN
+    DB 'HARCI',0,  10 DUP(0)    ; CHAIR
+    DB 'COLCK',0,  10 DUP(0)    ; CLOCK
+    DB 'DABRE',0,  10 DUP(0)    ; BREAD
+    DB 'GRITE',0,  10 DUP(0)    ; TIGER
+    DB 'ROHES',0,  10 DUP(0)    ; HORSE
+    DB 'DOCUL',0,  10 DUP(0)    ; CLOUD
+    DB 'TALPN',0,  10 DUP(0)    ; PLANT
+    DB 'GORANE',0,  9 DUP(0)    ; ORANGE
+    DB 'OOLCSH',0,  9 DUP(0)    ; SCHOOL
+    DB 'DRIBGE',0,  9 DUP(0)    ; BRIDGE
+    DB 'HICKENC',0, 8 DUP(0)    ; CHICKEN
+    DB 'BOWRAIN',0, 8 DUP(0)    ; RAINBOW
+    DB 'GUINPEN',0, 8 DUP(0)    ; PENGUIN
+    DB 'KETBLAN',0, 8 DUP(0)    ; BLANKET
+    DB 'DERTHUN',0, 8 DUP(0)    ; THUNDER
+    DB 'TERNLAN',0, 8 DUP(0)    ; LANTERN
+    DB 'PHINDOL',0, 8 DUP(0)    ; DOLPHIN
+
+    ; ================================================================
     ; TIER POINTER TABLE — lets SCR_GAME resolve tier base at runtime
     ; Usage: MOV BX, DIFFICULTY; SHL BX,1; MOV SI,[TIER_TABLE+BX]
     ; ================================================================
@@ -65,6 +103,30 @@ TIER_TABLE DW OFFSET EASY_WORDS    ; DIFF_EASY = 0
 PUBLIC SOUND_TABLE
 SOUND_TABLE DW 0
 
+    ; --- Title jingle (v1.3) — C-E-G-C ascending, ~750ms ---
+SND_TITLE_JINGLE DW 262, 175
+    DW 330, 175
+    DW 392, 175
+    DW 523, 225
+    DW 0
+
+    ; --- Win jingle (v1.3) — triumphant C5 fanfare, ~880ms ---
+SND_WIN_JINGLE DW 523, 150
+    DW 0, 30
+    DW 523, 150
+    DW 0, 30
+    DW 523, 150
+    DW 0, 30
+    DW 523, 340
+    DW 0
+
+    ; --- Lose jingle (v1.3) — descending sad, ~1100ms ---
+SND_LOSE_JINGLE DW 330, 250
+    DW 277, 250
+    DW 262, 300
+    DW 220, 300
+    DW 0
+
     ; ================================================================
     ; UI STRINGS — null-terminated, drawn by GFX_DRAW_STRING
     ; ================================================================
@@ -73,7 +135,11 @@ SOUND_TABLE DW 0
     PUBLIC STR_MODE_PROMPT, STR_1P, STR_2P
     PUBLIC STR_PLAYER1, STR_PLAYER2, STR_YOUR_TURN
     PUBLIC STR_VS, STR_WINNER, STR_TIE
+    PUBLIC STR_HINT
     PUBLIC BG_TITLE, BG_MODE, BG_NAME, BG_DIFF, BG_INSTR, BG_ROUND, BG_END
+    PUBLIC BG_LOGIN
+    PUBLIC SCRAMBLE_TABLE
+    PUBLIC SND_TITLE_JINGLE, SND_WIN_JINGLE, SND_LOSE_JINGLE
 
 STR_TITLE       DB 'SPELLING FUN!',0
 STR_INSTR       DB 'TYPE WHAT YOU HEAR. PRESS ENTER.',0
@@ -94,6 +160,7 @@ STR_YOUR_TURN   DB 'YOUR TURN!',0
 STR_VS          DB ' VS ',0
 STR_WINNER      DB 'WINNER: ',0
 STR_TIE         DB 'ITS A TIE!',0
+STR_HINT        DB 'HINT: ',0
 
     ; --- Background filenames (v1.2) ---
 BG_TITLE  DB 'TITLE.BIN',0
@@ -103,6 +170,7 @@ BG_DIFF   DB 'DIFF.BIN',0
 BG_INSTR  DB 'INSTR.BIN',0
 BG_ROUND  DB 'ROUND.BIN',0
 BG_END    DB 'END.BIN',0
+BG_LOGIN  DB 'LOGIN.BIN',0
 
     ; ================================================================
     ; SPRITE TABLE — [TEST 3] stub, 30KB sprite data removed

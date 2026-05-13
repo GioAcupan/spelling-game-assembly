@@ -1,0 +1,437 @@
+; SCR_END.ASM — Score + Leaderboard + Game Over (v1.3 spec)
+; Public: SCR_END_RUN
+;   Flow: GFX_LOAD_BG → win/lose jingle → title banner →
+;         score display (1P/2P) → leaderboard insert/save →
+;         leaderboard render → INP_WAIT_KEY → STATE_QUIT
+
+.MODEL SMALL
+.DATA
+    INCLUDE SHARED.INC
+
+    ; --- Global state (from MAIN.ASM) ---
+    EXTRN CURRENT_STATE:BYTE, NUM_PLAYERS:BYTE
+    EXTRN PLAYER_NAMES:BYTE, SCORES:WORD, HEARTS_ARR:BYTE
+    EXTRN DIFFICULTY:BYTE, LEADERBOARD:BYTE
+
+    ; --- Data assets (from DATA.ASM) ---
+    EXTRN STR_GAMEOVER:BYTE, STR_WIN:BYTE
+    EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE
+    EXTRN STR_VS:BYTE, STR_WINNER:BYTE, STR_TIE:BYTE
+    EXTRN BG_END:BYTE
+    EXTRN SND_WIN_JINGLE:WORD, SND_LOSE_JINGLE:WORD
+
+    ; --- Private strings ---
+    STR_LEADER   DB 'TOP 5 PLAYERS',0
+    STR_PTS      DB ' PTS',0
+    STR_SEP      DB ' | ',0              ; leaderboard column separator
+    STR_DASH     DB ' - ',0
+    NUM_BUF      DB 6 DUP(0)            ; scratch for NUM_TO_STR (5 digits + null)
+    DIFF_CHARS   DB 'E','M','H'         ; difficulty labels (indexed by DIFF_EASY=0, etc.)
+
+    ; --- Leaderboard loop scratch ---
+    LB_OFFSET    DW 0                    ; current byte offset into LEADERBOARD
+    LB_Y         DW 0                    ; current Y position
+    LB_IDX       DB 0                    ; entry index 0..4
+
+.CODE
+    ; --- GFX procs ---
+    EXTRN GFX_LOAD_BG:PROC, GFX_CLEAR:PROC, GFX_DRAW_STRING:PROC, GFX_DRAW_CHAR:PROC
+
+    ; --- Input procs ---
+    EXTRN INP_WAIT_KEY:PROC
+
+    ; --- Audio procs ---
+    EXTRN SND_PLAY_PATTERN:PROC
+
+    ; --- File I/O procs ---
+    EXTRN FILE_INSERT_SCORE:PROC, FILE_SAVE_SCORES:PROC
+
+    PUBLIC SCR_END_RUN
+
+; ================================================================
+; NUM_TO_STR — Convert 16-bit unsigned to decimal ASCII string.
+;   In:  AX = number (0–65535)
+;        ES:DI = dest buffer (6 bytes min)
+;   Out: buffer null-terminated
+;   Preserves: BX, CX, DX, DI
+;   Clobbers:  AX
+; ================================================================
+NUM_TO_STR PROC
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH DI
+
+    OR   AX, AX
+    JNZ  NTS_DIVIDE
+
+    ; Zero case — store "0"
+    MOV  BYTE PTR ES:[DI], '0'
+    MOV  BYTE PTR ES:[DI+1], 0
+    JMP  NTS_DONE
+
+NTS_DIVIDE:
+    XOR  CX, CX              ; CX = digit count
+
+NTS_PUSH:
+    XOR  DX, DX
+    MOV  BX, 10
+    DIV  BX                   ; AX = quotient, DX = remainder (0-9)
+    PUSH DX                   ; save digit on stack
+    INC  CX
+    OR   AX, AX
+    JNZ  NTS_PUSH
+
+NTS_POP:
+    POP  DX
+    ADD  DL, '0'
+    MOV  ES:[DI], DL
+    INC  DI
+    LOOP NTS_POP
+
+    MOV  BYTE PTR ES:[DI], 0  ; null terminate
+
+NTS_DONE:
+    POP  DI
+    POP  DX
+    POP  CX
+    POP  BX
+    RET
+NUM_TO_STR ENDP
+
+
+; ================================================================
+; DRAW_CHAR_SAFE — Draw one char with CX/DX preservation + advance.
+; GFX_DRAW_CHAR clobbers CX and DX. This wrapper saves/restores
+; them (like GFX_DRAW_STRING does internally) and advances CX by 8.
+;   In:  AL = ASCII char, BL = color, CX = x, DX = y
+;   Out: CX += 8, DX preserved; ES = A000h
+;   Preserves: DX
+;   Clobbers:  AX, SI, DI
+; ================================================================
+DRAW_CHAR_SAFE PROC
+    PUSH CX
+    PUSH DX
+    CALL GFX_DRAW_CHAR
+    POP  DX
+    POP  CX
+    ADD  CX, 8
+    RET
+DRAW_CHAR_SAFE ENDP
+
+
+; ================================================================
+; SCR_END_RUN — Show final scores, leaderboard, play jingle.
+;   Reads:  NUM_PLAYERS, SCORES[], HEARTS_ARR[], PLAYER_NAMES[]
+;           DIFFICULTY, LEADERBOARD
+;   Writes: LEADERBOARD (via FILE_INSERT_SCORE + FILE_SAVE_SCORES)
+;           CURRENT_STATE = STATE_QUIT
+;   Preserves: BX, CX, DX, SI, DI, BP
+; ================================================================
+SCR_END_RUN PROC
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI
+    PUSH DI
+    PUSH BP
+    MOV  AX, @DATA
+    MOV  DS, AX
+
+    ; --- 1. Clear framebuffer (fallback if END.BIN missing), then load bg ---
+    MOV  AL, 0
+    CALL GFX_CLEAR
+    LEA  DX, BG_END
+    CALL GFX_LOAD_BG            ; ES = A000h after this
+
+    ; --- 2. Determine win/lose and play jingle ---
+    MOV  AL, HEARTS_ARR
+    OR   AL, AL
+    JZ   SER_LOSE_JINGLE
+    CMP  NUM_PLAYERS, 2
+    JB   SER_WIN_JINGLE
+    CMP  HEARTS_ARR+1, 0
+    JE   SER_LOSE_JINGLE
+
+SER_WIN_JINGLE:
+    LEA  SI, SND_WIN_JINGLE
+    CALL SND_PLAY_PATTERN
+    JMP  SER_AFTER_JINGLE
+
+SER_LOSE_JINGLE:
+    LEA  SI, SND_LOSE_JINGLE
+    CALL SND_PLAY_PATTERN
+
+SER_AFTER_JINGLE:
+    ; --- 3. Title banner: STR_WIN or STR_GAMEOVER ---
+    MOV  AL, HEARTS_ARR
+    OR   AL, AL
+    JZ   SER_LOSE_TITLE
+    CMP  NUM_PLAYERS, 2
+    JB   SER_WIN_TITLE
+    CMP  HEARTS_ARR+1, 0
+    JE   SER_LOSE_TITLE
+
+SER_WIN_TITLE:
+    LEA  SI, STR_WIN
+    JMP  SER_DRAW_TITLE
+
+SER_LOSE_TITLE:
+    LEA  SI, STR_GAMEOVER
+
+SER_DRAW_TITLE:
+    MOV  BL, 15
+    MOV  CX, 110
+    MOV  DX, 20
+    CALL GFX_DRAW_STRING
+
+    ; --- 4. Score display ---
+    CMP  NUM_PLAYERS, 2
+    JE   SER_2P_SCORES
+
+    ; --- 4a. 1P score: "PLAYER 1 - AAA - 240 PTS" at Y=45 ---
+    MOV  BL, 15
+    MOV  CX, 70
+    MOV  DX, 45
+
+    LEA  SI, STR_PLAYER1
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AL, PLAYER_NAMES
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+1
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+2
+    CALL DRAW_CHAR_SAFE
+
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AX, SCORES
+    PUSH ES
+    PUSH DS
+    POP  ES
+    LEA  DI, NUM_BUF
+    CALL NUM_TO_STR
+    POP  ES
+
+    LEA  SI, NUM_BUF
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_PTS
+    CALL GFX_DRAW_STRING
+    JMP  SER_INSERT
+
+    ; --- 4b. 2P score display ---
+SER_2P_SCORES:
+    ; P1 line: "PLAYER 1 - AAA - 150 PTS" at Y=40
+    MOV  BL, 15
+    MOV  CX, 60
+    MOV  DX, 40
+
+    LEA  SI, STR_PLAYER1
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AL, PLAYER_NAMES
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+1
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+2
+    CALL DRAW_CHAR_SAFE
+
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AX, SCORES
+    PUSH ES
+    PUSH DS
+    POP  ES
+    LEA  DI, NUM_BUF
+    CALL NUM_TO_STR
+    POP  ES
+
+    LEA  SI, NUM_BUF
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_PTS
+    CALL GFX_DRAW_STRING
+
+    ; P2 line: "PLAYER 2 - BBB - 90 PTS" at Y=58
+    MOV  BL, 15
+    MOV  CX, 60
+    MOV  DX, 58
+
+    LEA  SI, STR_PLAYER2
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AL, PLAYER_NAMES+3
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+4
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+5
+    CALL DRAW_CHAR_SAFE
+
+    LEA  SI, STR_DASH
+    CALL GFX_DRAW_STRING
+
+    MOV  AX, SCORES+2
+    PUSH ES
+    PUSH DS
+    POP  ES
+    LEA  DI, NUM_BUF
+    CALL NUM_TO_STR
+    POP  ES
+
+    LEA  SI, NUM_BUF
+    CALL GFX_DRAW_STRING
+    LEA  SI, STR_PTS
+    CALL GFX_DRAW_STRING
+
+    ; --- Winner / Tie banner at Y=78 ---
+    MOV  AX, SCORES
+    CMP  AX, SCORES+2
+    JE   SER_TIE
+    JA   SER_P1_WIN
+
+    ; P2 wins: "WINNER: BBB"
+    MOV  BL, 15
+    MOV  CX, 95
+    MOV  DX, 78
+    LEA  SI, STR_WINNER
+    CALL GFX_DRAW_STRING
+    MOV  AL, PLAYER_NAMES+3
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+4
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+5
+    CALL DRAW_CHAR_SAFE
+    JMP  SER_INSERT
+
+SER_P1_WIN:
+    ; P1 wins: "WINNER: AAA"
+    MOV  BL, 15
+    MOV  CX, 95
+    MOV  DX, 78
+    LEA  SI, STR_WINNER
+    CALL GFX_DRAW_STRING
+    MOV  AL, PLAYER_NAMES
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+1
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, PLAYER_NAMES+2
+    CALL DRAW_CHAR_SAFE
+    JMP  SER_INSERT
+
+SER_TIE:
+    MOV  BL, 15
+    MOV  CX, 100
+    MOV  DX, 78
+    LEA  SI, STR_TIE
+    CALL GFX_DRAW_STRING
+
+    ; --- 5. Leaderboard insert ---
+SER_INSERT:
+    ; Insert P1
+    LEA  SI, PLAYER_NAMES
+    MOV  BX, SCORES
+    MOV  AL, DIFFICULTY
+    CALL FILE_INSERT_SCORE
+
+    ; Insert P2 (2P only)
+    CMP  NUM_PLAYERS, 2
+    JNE  SER_SAVE
+    LEA  SI, PLAYER_NAMES+3
+    MOV  BX, SCORES+2
+    MOV  AL, DIFFICULTY
+    CALL FILE_INSERT_SCORE
+
+SER_SAVE:
+    CALL FILE_SAVE_SCORES
+
+    ; --- 6. Leaderboard render ---
+    ; Header: "TOP 5 PLAYERS" at Y=105
+    MOV  BL, 15
+    MOV  CX, 95
+    MOV  DX, 105
+    LEA  SI, STR_LEADER
+    CALL GFX_DRAW_STRING
+
+    ; Init loop state in scratch variables
+    MOV  LB_OFFSET, 0
+    MOV  LB_Y, 120
+    MOV  LB_IDX, 0
+
+SER_LB_LOOP:
+    ; Check if entry is empty (name[0] == 0) → skip
+    MOV  DI, LB_OFFSET
+    CMP  BYTE PTR [LEADERBOARD + DI], 0
+    JE   SER_LB_NEXT
+
+    ; --- Draw name (3 chars) at (40, LB_Y) ---
+    MOV  CX, 40
+    MOV  DX, LB_Y
+    MOV  BL, 15
+
+    MOV  AL, [LEADERBOARD + DI]
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, [LEADERBOARD + DI + 1]
+    CALL DRAW_CHAR_SAFE
+    MOV  AL, [LEADERBOARD + DI + 2]
+    CALL DRAW_CHAR_SAFE
+
+    ; " | "
+    LEA  SI, STR_SEP
+    CALL GFX_DRAW_STRING
+
+    ; Score number
+    MOV  DI, LB_OFFSET
+    MOV  AX, WORD PTR [LEADERBOARD + DI + 3]
+
+    PUSH ES
+    PUSH DS
+    POP  ES
+    LEA  DI, NUM_BUF
+    CALL NUM_TO_STR
+    POP  ES
+
+    LEA  SI, NUM_BUF
+    CALL GFX_DRAW_STRING
+
+    ; " | "
+    LEA  SI, STR_SEP
+    CALL GFX_DRAW_STRING
+
+    ; Difficulty letter
+    MOV  DI, LB_OFFSET
+    MOV  AL, [LEADERBOARD + DI + 5]
+    MOV  AH, 0
+    MOV  SI, AX
+    MOV  AL, DIFF_CHARS[SI]
+    CALL DRAW_CHAR_SAFE
+
+SER_LB_NEXT:
+    ADD  LB_OFFSET, LB_ENTRY_SIZE
+    ADD  LB_Y, 13
+    INC  LB_IDX
+    CMP  LB_IDX, LB_MAX_ENTRIES
+    JB   SER_LB_LOOP
+
+    ; --- 7. Wait for any key ---
+    CALL INP_WAIT_KEY
+
+    ; --- 8. Transition to quit ---
+    MOV  CURRENT_STATE, STATE_QUIT
+    POP  BP
+    POP  DI
+    POP  SI
+    POP  DX
+    POP  CX
+    POP  BX
+    RET
+SCR_END_RUN ENDP
+
+END
