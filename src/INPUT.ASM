@@ -45,6 +45,8 @@ INP_CHECK_KEY ENDP
 
 ;-----------------------------------------------------------
 ; INP_READ_STRING — Read a string until Enter, with basic editing.
+; No screen echo — callers in graphics mode must handle echo
+; via GFX_DRAW_CHAR at their desired position.
 ; In:  ES:DI = buffer, CX = max length
 ; Out: buffer null-terminated, CX = actual length
 ; Preserves: BX, DI
@@ -76,20 +78,12 @@ IRS_LOOP:
 IRS_STORE:
     MOV  ES:[DI+BX], AL      ; store char in caller's buffer
     INC  BX
-    INT  29h                 ; echo char to screen (fast TTY)
     JMP  IRS_LOOP
 
 IRS_BACKSPACE:
     OR   BX, BX              ; anything to delete?
     JZ   IRS_LOOP            ; no — ignore backspace
     DEC  BX
-    ; Echo backspace: move cursor left, overwrite with space, move left again
-    MOV  AL, 8               ; BS — cursor left one column
-    INT  29h
-    MOV  AL, ' '             ; overwrite erased char with space
-    INT  29h
-    MOV  AL, 8               ; BS again — cursor left
-    INT  29h
     JMP  IRS_LOOP
 
 IRS_DONE:

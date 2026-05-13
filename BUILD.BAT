@@ -13,6 +13,7 @@ if "%1"=="TEST_GFX" goto TEST_GFX
 if "%1"=="TEST_INP" goto TEST_INP
 if "%1"=="TEST_AUD" goto TEST_AUD
 if "%1"=="TEST_FIO" goto TEST_FIO
+if "%1"=="TEST_SCI" goto TEST_SCI
 
 REM ============================================
 REM Assemble each module to .OBJ
@@ -31,7 +32,7 @@ REM TODO: Day 5 — uncomment when STATE smoke test passes
 REM tasm /zi /isrc src\STATE.ASM, build\STATE.OBJ
 tasm /zi /isrc src\DATA.ASM, build\DATA.OBJ
 REM TODO: Day 5 — uncomment when screen modules pass
-REM tasm /zi /isrc src\SCR_INTRO.ASM, build\SCR_INTRO.OBJ
+REM tasm /zi /isrc src\SCRINTRO.ASM, build\SCRINTRO.OBJ
 REM tasm /zi /isrc src\SCR_GAME.ASM, build\SCR_GAME.OBJ
 REM tasm /zi /isrc src\SCR_END.ASM, build\SCR_END.OBJ
 
@@ -158,6 +159,51 @@ del DATA.OBJ
 tlink /v build\TEST_FIO.OBJ+build\FILEIO.OBJ+build\GFX.OBJ+build\DATA.OBJ, bin\TEST_FIO.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_FIO.EXE
+goto DONE
+
+:TEST_SCI
+echo Building smoke test: SCRINTRO
+tasm /zi /isrc tests\TEST_SCI.ASM
+if errorlevel 1 goto FAIL
+copy TEST_SCI.OBJ build\TEST_SCI.OBJ >nul
+del TEST_SCI.OBJ
+tasm /zi /isrc src\SCRINTRO.ASM
+if errorlevel 1 goto FAIL
+copy SCRINTRO.OBJ build\SCRINTRO.OBJ >nul
+del SCRINTRO.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tasm /zi /isrc src\INPUT.ASM
+if errorlevel 1 goto FAIL
+copy INPUT.OBJ build\INPUT.OBJ >nul
+del INPUT.OBJ
+tasm /zi /isrc src\AUDIO.ASM
+if errorlevel 1 goto FAIL
+copy AUDIO.OBJ build\AUDIO.OBJ >nul
+del AUDIO.OBJ
+tasm /zi /isrc src\FILEIO.ASM
+if errorlevel 1 goto FAIL
+copy FILEIO.OBJ build\FILEIO.OBJ >nul
+del FILEIO.OBJ
+tasm /zi /isrc src\DATA.ASM
+if errorlevel 1 goto FAIL
+copy DATA.OBJ build\DATA.OBJ >nul
+del DATA.OBJ
+REM Build response file to avoid DOS 127-byte command tail limit
+REM + at end of line = TLINK continuation (all obj files become one arg)
+ECHO build\TEST_SCI.OBJ+>build\TEST_SCI.LNK
+ECHO build\SCRINTRO.OBJ+>>build\TEST_SCI.LNK
+ECHO build\GFX.OBJ+>>build\TEST_SCI.LNK
+ECHO build\INPUT.OBJ+>>build\TEST_SCI.LNK
+ECHO build\AUDIO.OBJ+>>build\TEST_SCI.LNK
+ECHO build\FILEIO.OBJ+>>build\TEST_SCI.LNK
+ECHO build\DATA.OBJ,bin\TEST_SCI.EXE>>build\TEST_SCI.LNK
+tlink /v @build\TEST_SCI.LNK
+if errorlevel 1 goto FAIL
+DEL build\TEST_SCI.LNK >nul
+echo Build complete: bin\TEST_SCI.EXE
 goto DONE
 
 :FAIL
