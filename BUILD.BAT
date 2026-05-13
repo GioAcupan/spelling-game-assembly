@@ -11,6 +11,8 @@ if "%1"=="TEST_ST" goto TEST_ST
 if "%1"=="TEST_DT" goto TEST_DT
 if "%1"=="TEST_GFX" goto TEST_GFX
 if "%1"=="TEST_INP" goto TEST_INP
+if "%1"=="TEST_AUD" goto TEST_AUD
+if "%1"=="TEST_FIO" goto TEST_FIO
 
 REM ============================================
 REM Assemble each module to .OBJ
@@ -118,6 +120,44 @@ del INPUT.OBJ
 tlink /v build\TEST_INP.OBJ+build\INPUT.OBJ, bin\TEST_INP.EXE
 if errorlevel 1 goto FAIL
 echo Build complete: bin\TEST_INP.EXE
+goto DONE
+
+:TEST_AUD
+echo Building smoke test: AUDIO
+tasm /zi /isrc tests\TEST_AUD.ASM
+if errorlevel 1 goto FAIL
+copy TEST_AUD.OBJ build\TEST_AUD.OBJ >nul
+del TEST_AUD.OBJ
+tasm /zi /isrc src\AUDIO.ASM
+if errorlevel 1 goto FAIL
+copy AUDIO.OBJ build\AUDIO.OBJ >nul
+del AUDIO.OBJ
+tlink /v build\TEST_AUD.OBJ+build\AUDIO.OBJ, bin\TEST_AUD.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TEST_AUD.EXE
+goto DONE
+
+:TEST_FIO
+echo Building smoke test: FILEIO
+tasm /zi /isrc tests\TEST_FIO.ASM
+if errorlevel 1 goto FAIL
+copy TEST_FIO.OBJ build\TEST_FIO.OBJ >nul
+del TEST_FIO.OBJ
+tasm /zi /isrc src\FILEIO.ASM
+if errorlevel 1 goto FAIL
+copy FILEIO.OBJ build\FILEIO.OBJ >nul
+del FILEIO.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tasm /zi /isrc src\DATA.ASM
+if errorlevel 1 goto FAIL
+copy DATA.OBJ build\DATA.OBJ >nul
+del DATA.OBJ
+tlink /v build\TEST_FIO.OBJ+build\FILEIO.OBJ+build\GFX.OBJ+build\DATA.OBJ, bin\TEST_FIO.EXE
+if errorlevel 1 goto FAIL
+echo Build complete: bin\TEST_FIO.EXE
 goto DONE
 
 :FAIL

@@ -26,5 +26,9 @@ SPRITE_SIZE      EQU 1024    ; 32x32 pixels
 BG_SIZE          EQU 64000   ; 320x200 Mode 13h framebuffer
 
 ; --- Leaderboard ---
-LB_MAX_ENTRIES  EQU 5
-LB_ENTRY_SIZE   EQU 8        ; name(3) + score(2) + difficulty(1) + padding(2)
+LB_MAX_ENTRIES   EQU 5
+LB_ENTRY_SIZE    EQU 8        ; name(3) + score(2) + difficulty(1) + padding(2)
+
+; --- User accounts (v1.3) ---
+MAX_USERS        EQU 5
+USER_RECORD_SIZE EQU 8        ; name(3) + password(5)
