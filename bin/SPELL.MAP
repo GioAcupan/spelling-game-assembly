@@ -1,9 +1,13 @@
 
  Start  Stop   Length Name               Class
 
- 00000H 00011H 00012H _TEXT              CODE
- 00020H 00025H 00006H _DATA              DATA
- 00030H 0042FH 00400H STACK              STACK
+ 00000H 0001DH 0001EH _TEXT              CODE
+ 00020H 00049H 0002AH _DATA              DATA
+ 00050H 0044FH 00400H STACK              STACK
 
+Error: Undefined symbol GFX_INIT in module SRC\MAIN.ASM
+Error: Undefined symbol FILE_LOAD_SCORES in module SRC\MAIN.ASM
+Error: Undefined symbol GAME_TICK in module SRC\MAIN.ASM
+Error: Undefined symbol GFX_SHUTDOWN in module SRC\MAIN.ASM
 Program entry point at 0000:0000
 
