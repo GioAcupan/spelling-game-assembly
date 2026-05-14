@@ -146,17 +146,17 @@ SEI_SAV_COL:
     POP  ES                  ; restore ES=DS
 
     ; --- Draw character ---
-    POP  DI
-    POP  SI
-    ; ES, CX, BX still on stack
+    ; DI, SI, ES, CX, BX still on stack
 
     MOV  CX, ECHO_XW         ; CX = echo X
     MOV  DL, ECHO_ROW
     XOR  DH, DH
     MOV  BL, ECHO_CLR
     MOV  AL, ECHO_CHAR
-    CALL GFX_DRAW_CHAR       ; ES → A000h
+    CALL GFX_DRAW_CHAR       ; ES → A000h, clobbers DI, SI
 
+    POP  DI                  ; restore buffer pointer
+    POP  SI                  ; restore caller SI
     POP  ES                  ; restore ES=DS
     POP  CX                  ; restore max length
     POP  BX                  ; restore char index

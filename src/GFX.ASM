@@ -276,7 +276,7 @@ GFX_DRAW_SPRITE ENDP
 ;      DX = y (0–192)
 ; Out: 8×8 glyph drawn; ES = A000h
 ; Preserves: DS, BP
-; Clobbers: AX, CX, DX, SI, DI
+; Clobbers: AX, BX (BH←BL), CX, DX, SI, DI, ES (←A000h)
 ;-----------------------------------------------------------
 GFX_DRAW_CHAR PROC
     PUSH BP
@@ -343,7 +343,7 @@ GFX_DRAW_CHAR ENDP
 ;      DX = y (0–192)
 ; Out: String rendered; wraps to next line at x > 312
 ; Preserves: DS, BP
-; Clobbers: AX, CX, DX, SI, DI
+; Clobbers: AX, BX (BH←BL), CX, DX, SI, DI, ES (←A000h)
 ;-----------------------------------------------------------
 GFX_DRAW_STRING PROC
     PUSH BP

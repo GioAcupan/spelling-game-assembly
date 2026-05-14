@@ -13,22 +13,41 @@
     ; Color 4 = red, color 0 = transparent
     PUBLIC TEST_SPRITE
 TEST_SPRITE LABEL BYTE
-    ; Top 12 rows: vertical bar only
-    REPT 12
-        DB 12 DUP(0)
-        DB 8 DUP(4)
-        DB 12 DUP(0)
-    ENDM
+    ; Top 12 rows: vertical bar only (manually unrolled for TASM 4.1)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
     ; Middle 8 rows: full horizontal bar
-    REPT 8
-        DB 32 DUP(4)
-    ENDM
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
+    DB 32 DUP(4)
     ; Bottom 12 rows: vertical bar only
-    REPT 12
-        DB 12 DUP(0)
-        DB 8 DUP(4)
-        DB 12 DUP(0)
-    ENDM
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
+    DB 12 DUP(0), 8 DUP(4), 12 DUP(0)
 
 .CODE
     EXTRN GFX_INIT:PROC, GFX_SHUTDOWN:PROC, GFX_CLEAR:PROC
