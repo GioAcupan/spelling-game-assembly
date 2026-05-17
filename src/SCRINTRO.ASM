@@ -19,6 +19,7 @@
     EXTRN STR_MODE_PROMPT:BYTE, STR_1P:BYTE, STR_2P:BYTE
     EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE
     EXTRN BG_TITLE:BYTE, BG_MODE:BYTE, BG_NAME:BYTE, BG_DIFF:BYTE, BG_INSTR:BYTE
+    EXTRN BG_LOGIN:BYTE
 
     PROMPT_KEY    DB 'PRESS ANY KEY',0
     PROMPT_NAME   DB 'ENTER INITIALS:',0
@@ -38,6 +39,8 @@
     ECHO_IDX  DB 0
     ECHO_XW   DW 0
     ECHO_SAVE DB 320 DUP(0)   ; 5 slots × 64 bytes bg save
+
+    EXTRN SND_TITLE_JINGLE:WORD
 
 .CODE
     EXTRN GFX_LOAD_BG:PROC, GFX_CLEAR:PROC, GFX_DRAW_STRING:PROC
@@ -271,9 +274,9 @@ SCR_TITLE_RUN PROC
     MOV  DX, 120
     CALL GFX_DRAW_STRING
 
-    ; v1.3 placeholder: title jingle
-    ; LEA SI, SND_TITLE_JINGLE
-    ; CALL SND_PLAY_PATTERN
+    ; --- Title jingle ---
+    LEA  SI, SND_TITLE_JINGLE
+    CALL SND_PLAY_PATTERN
 
     CALL INP_WAIT_KEY
 
@@ -302,9 +305,10 @@ SCR_LOGIN_RUN PROC
     MOV  LOGIN_RETRIES, 0
 
 SLR_RENDER:
-    ; Fallback background — BG_LOGIN.BIN not in DATA.ASM yet
-    MOV  AL, 1                   ; blue
+    MOV  AL, 0                   ; black fallback
     CALL GFX_CLEAR               ; ES = A000h after call
+    LEA  DX, BG_LOGIN
+    CALL GFX_LOAD_BG             ; ES = A000h after call
 
     LEA  SI, STR_LOGIN
     MOV  BL, 15

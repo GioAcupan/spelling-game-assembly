@@ -3,11 +3,7 @@
 ;   SCR_ROUND_RUN — background → scramble hint → player input loop
 ;   SCR_JUDGE_RUN — judge answers, update scores/hearts, advance/end
 ;
-; Stub workarounds (tagged [STUB]):
-;   SPRITE_TABLE stub → draws "[SPRITE]" text placeholder
-;   SOUND_TABLE stub  → draws "[NO SOUND]" text + 1s delay
-;   Remove [STUB] blocks when spriter delivers assets.
-
+; v1.5: sprites + sounds integrated — GFX_DRAW_SPRITE + SND_PLAY_PATTERN active.
 .MODEL SMALL
 .DATA
     INCLUDE SHARED.INC
@@ -15,29 +11,27 @@
     ; --- Global state (from MAIN.ASM) ---
     EXTRN CURRENT_STATE:BYTE, CURRENT_WORD:BYTE
     EXTRN NUM_PLAYERS:BYTE, CURRENT_PLAYER:BYTE
-    EXTRN DIFFICULTY:BYTE, TIMER_START:WORD
+    EXTRN DIFFICULTY:BYTE
     EXTRN PLAYER_NAMES:BYTE, SCORES:WORD, HEARTS_ARR:BYTE
     EXTRN PLAYER_RESULTS:BYTE, PLAYER_TIMES:WORD
     EXTRN INPUT_BUFFER:BYTE
 
     ; --- Data assets (from DATA.ASM) ---
-    EXTRN EASY_WORDS:BYTE, MED_WORDS:BYTE, HARD_WORDS:BYTE
-    EXTRN TIER_TABLE:WORD, SOUND_TABLE:WORD
+
+    EXTRN TIER_TABLE:WORD
     EXTRN STR_GAMEOVER:BYTE, STR_WIN:BYTE
     EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE, STR_YOUR_TURN:BYTE
     EXTRN STR_VS:BYTE, BG_ROUND:BYTE
     EXTRN SCRAMBLE_TABLE:BYTE, STR_HINT:BYTE
+    EXTRN SPRITE_TABLE:BYTE, SOUND_TABLE:WORD
 
-    ; --- Sprites (from SPRITES.ASM) ---
-    EXTRN SPRITE_TABLE:BYTE
 
     ; --- Private strings & scratch ---
     STR_RIGHT   DB 'YES!',0
     STR_WRONG   DB 'OOPS!',0
     STR_TYPE    DB 'TYPE IT:',0
     STR_SCORE   DB 'SCORE:',0
-    STR_SPRHERE DB '[SPRITE]',0
-    STR_NOSND   DB '[NO SOUND]',0
+
     STR_HEARTS  DB 'HEARTS:',0
     NUM_BUF     DB 6 DUP(0)            ; scratch for score-to-ASCII
 
@@ -48,13 +42,14 @@
 .CODE
     ; --- GFX procs ---
     EXTRN GFX_LOAD_BG:PROC, GFX_CLEAR:PROC
-    EXTRN GFX_DRAW_SPRITE:PROC, GFX_DRAW_CHAR:PROC, GFX_DRAW_STRING:PROC
+    EXTRN GFX_DRAW_CHAR:PROC, GFX_DRAW_STRING:PROC
+    EXTRN GFX_DRAW_SPRITE:PROC
 
     ; --- Input procs ---
-    EXTRN INP_WAIT_KEY:PROC, INP_CHECK_KEY:PROC, INP_READ_STRING:PROC
+    EXTRN INP_WAIT_KEY:PROC
 
     ; --- Audio procs ---
-    EXTRN SND_PLAY_PATTERN:PROC, SND_DELAY:PROC
+    EXTRN SND_PLAY_PATTERN:PROC
 
     PUBLIC SCR_ROUND_RUN, SCR_JUDGE_RUN
 
@@ -181,25 +176,21 @@ SCR_ROUND_RUN PROC
     ADD  SI, AX                  ; DS:SI = correct word string
     MOV  WORD_BASE, SI           ; save for comparison in player loop
 
-    ; --- 4. [STUB] Sprite placeholder ---
-    ; Real: resolve sprite addr = SPRITE_TABLE + index * SPRITE_SIZE
-    ;       MOV BX, 144 / MOV DX, 50 / CALL GFX_DRAW_SPRITE
-    MOV  BL, 15
-    LEA  SI, STR_SPRHERE
-    MOV  CX, 140
-    MOV  DX, 50
-    CALL GFX_DRAW_STRING
+    ; --- 4. Draw word sprite ---
+    MOV  AX, GLOBAL_IDX
+    MOV  CX, SPRITE_SIZE        ; 1024
+    MUL  CX                     ; DX:AX = index * 1024 (DX=0)
+    MOV  SI, AX
+    ADD  SI, OFFSET SPRITE_TABLE ; DS:SI = sprite pixel data
+    MOV  BX, 144                ; x (centered)
+    MOV  DX, 50                 ; y
+    CALL GFX_DRAW_SPRITE
 
-    ; --- 5. [STUB] Sound placeholder ---
-    ; Real: resolve sound addr = SOUND_TABLE + index * 4
-    ;       CALL SND_PLAY_PATTERN
-    MOV  BL, 7                   ; gray
-    LEA  SI, STR_NOSND
-    MOV  CX, 140
-    MOV  DX, 62
-    CALL GFX_DRAW_STRING
-    MOV  CX, 1000
-    CALL SND_DELAY               ; 1s pause so player can see screen
+    ; --- 5. Play word sound ---
+    MOV  SI, GLOBAL_IDX         ; reload from memory (GFX_DRAW_SPRITE clobbered SI)
+    SHL  SI, 1                  ; *2 (word-indexed table)
+    MOV  SI, [SOUND_TABLE + SI] ; DS:SI = pattern pointer
+    CALL SND_PLAY_PATTERN
 
     ; --- 6. [v1.4] Draw scramble hint ---
     ; Draw scramble using precomputed offset (line ~165)
@@ -216,44 +207,6 @@ SCR_ROUND_RUN PROC
     MOV  CX, 148
     MOV  DX, 95
     CALL GFX_DRAW_STRING
-
-    ; --- DEBUG: word-index at top-right ---
-    MOV  BL, 10                  ; green
-    MOV  CX, 260
-    MOV  DX, 3
-    MOV  AL, 'C'
-    CALL GFX_DRAW_CHAR           ; "C" = CURRENT_WORD
-    MOV  AL, CURRENT_WORD
-    ADD  AL, '0'
-    MOV  CX, 268
-    MOV  DX, 3
-    CALL GFX_DRAW_CHAR
-    ; --- Show SCRAMBLE_OFF / 16 ---
-    MOV  BL, 12                  ; red
-    MOV  CX, 260
-    MOV  DX, 12
-    MOV  AL, 'S'
-    CALL GFX_DRAW_CHAR           ; "S" = SCRAMBLE_OFF/16
-    MOV  AX, SCRAMBLE_OFF
-    MOV  CL, 4
-    SHR  AX, CL                  ; AX = word index from saved offset
-    ADD  AL, '0'
-    MOV  CX, 268
-    MOV  DX, 12
-    CALL GFX_DRAW_CHAR
-
-    ; --- Probe: first byte at SCRAMBLE_TABLE + SCRAMBLE_OFF ---
-    MOV  BL, 11                  ; cyan
-    MOV  CX, 260
-    MOV  DX, 21
-    MOV  AL, 'T'
-    CALL GFX_DRAW_CHAR           ; "T" = test probe
-    LEA  SI, SCRAMBLE_TABLE
-    ADD  SI, SCRAMBLE_OFF        ; SI = &SCRAMBLE_TABLE[offset]
-    MOV  AL, [SI]                ; AL = first byte there
-    MOV  CX, 268
-    MOV  DX, 21
-    CALL GFX_DRAW_CHAR           ; draw that byte as a char
 
     ; --- 7. Player input loop ---
     MOV  CURRENT_PLAYER, 0
