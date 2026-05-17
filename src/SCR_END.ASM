@@ -378,8 +378,10 @@ SER_LB_LOOP:
 
     MOV  AL, [LEADERBOARD + DI]
     CALL DRAW_CHAR_SAFE
+    MOV  DI, LB_OFFSET             ; reload — DI clobbered by DRAW_CHAR_SAFE
     MOV  AL, [LEADERBOARD + DI + 1]
     CALL DRAW_CHAR_SAFE
+    MOV  DI, LB_OFFSET             ; reload — DI clobbered by DRAW_CHAR_SAFE
     MOV  AL, [LEADERBOARD + DI + 2]
     CALL DRAW_CHAR_SAFE
 
