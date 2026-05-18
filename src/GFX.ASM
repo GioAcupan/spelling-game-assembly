@@ -546,12 +546,21 @@ GFX_LOAD_BG PROC
     MOV  DX, DI
     INT  21h
     POP  DS
+    JC   GLB_CLOSE
 
     ; Close file
     MOV  AH, 3Eh
     MOV  BX, BG_HANDLE
     INT  21h
+    JMP  GLB_DONE
 
+GLB_CLOSE:
+    MOV  AH, 3Eh
+    MOV  BX, BG_HANDLE
+    INT  21h
+    STC                      ; Ensure carry remains set even if close clears it
+
+GLB_DONE:
 GLB_ERR:
     POP  ES
     POP  DI

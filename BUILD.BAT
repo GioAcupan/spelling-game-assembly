@@ -16,6 +16,7 @@ if "%1"=="TEST_FIO" goto TEST_FIO
 if "%1"=="TEST_SCI" goto TEST_SCI
 if "%1"=="TEST_SG" goto TEST_SG
 if "%1"=="TEST_SE" goto TEST_SE
+if "%1"=="TEST_BG" goto TEST_BG
 
 REM ============================================
 REM Assemble each module to .OBJ
@@ -51,6 +52,7 @@ ECHO build\SCR_END.OBJ,bin\SPELL.EXE>>build\SPELL.LNK
 tlink /v @build\SPELL.LNK
 if errorlevel 1 goto FAIL
 DEL build\SPELL.LNK >nul
+if exist welcome.bin copy welcome.bin bin\welcome.bin >nul
 
 echo.
 echo Build complete: bin\SPELL.EXE
@@ -293,6 +295,22 @@ tlink /v @build\TEST_SE.LNK
 if errorlevel 1 goto FAIL
 DEL build\TEST_SE.LNK >nul
 echo Build complete: bin\TEST_SE.EXE
+goto DONE
+
+:TEST_BG
+echo Building smoke test: BACKGROUND PREVIEW
+tasm /zi /isrc tests\TEST_BG.ASM
+if errorlevel 1 goto FAIL
+copy TEST_BG.OBJ build\TEST_BG.OBJ >nul
+del TEST_BG.OBJ
+tasm /zi /isrc src\GFX.ASM
+if errorlevel 1 goto FAIL
+copy GFX.OBJ build\GFX.OBJ >nul
+del GFX.OBJ
+tlink /v build\TEST_BG.OBJ+build\GFX.OBJ, bin\TEST_BG.EXE
+if errorlevel 1 goto FAIL
+if exist welcome.bin copy welcome.bin bin\welcome.bin >nul
+echo Build complete: bin\TEST_BG.EXE
 goto DONE
 
 :FAIL

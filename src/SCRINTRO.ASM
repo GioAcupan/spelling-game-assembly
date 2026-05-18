@@ -263,17 +263,6 @@ SCR_TITLE_RUN PROC
     LEA  DX, BG_TITLE            ; DS:DX = filename
     CALL GFX_LOAD_BG             ; ES = A000h after call
 
-    LEA  SI, STR_TITLE           ; DS:SI = string
-    MOV  BL, 15                  ; white
-    MOV  CX, 100                 ; x
-    MOV  DX, 80                  ; y
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, PROMPT_KEY
-    MOV  CX, 100
-    MOV  DX, 120
-    CALL GFX_DRAW_STRING
-
     ; --- Title jingle ---
     LEA  SI, SND_TITLE_JINGLE
     CALL SND_PLAY_PATTERN

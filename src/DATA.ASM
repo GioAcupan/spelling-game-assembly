@@ -227,7 +227,7 @@ STR_TIE         DB 'ITS A TIE!',0
 STR_HINT        DB 'HINT: ',0
 
     ; --- Background filenames (v1.2) ---
-BG_TITLE  DB 'TITLE.BIN',0
+BG_TITLE  DB 'welcome.bin',0
 BG_MODE   DB 'MODE.BIN',0
 BG_NAME   DB 'NAME.BIN',0
 BG_DIFF   DB 'DIFF.BIN',0
