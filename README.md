@@ -2,7 +2,7 @@
 
 An educational toddler spelling game for Intel 8086 real mode, running in DOSBox. Built with TASM 4.1 and TLINK.
 
-Kids spell words across three difficulty tiers. Visual sprite rewards, PC speaker sound effects, and a persistent leaderboard.
+Kids spell words across three difficulty tiers. Visual sprite rewards, PC speaker sound effects, and a persistent leaderboard. (To update pa po UI)
 
 ## Requirements
 
