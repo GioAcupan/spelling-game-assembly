@@ -1,4 +1,4 @@
-; MAIN.ASM — Entry point and game loop (v1.2)
+; MAIN.ASM ??? Entry point and game loop (v1.2)
 ; Owns all runtime state. Calls GAME_TICK in a loop until STATE_QUIT.
 
 .MODEL SMALL
@@ -15,12 +15,12 @@
     CURRENT_WORD    DB  0
     TIMER_START     DW  0
 
-    ; --- Leaderboard (5 entries × 8 bytes = 40B) ---
+    ; --- Leaderboard (5 entries ?? 8 bytes = 40B) ---
     LEADERBOARD     DB  LB_MAX_ENTRIES * LB_ENTRY_SIZE DUP(0)
 
     ; --- Login / user account state (v1.3) ---
     SESSION_USER    DB  '   '            ; logged-in username (3 chars)
-    USER_TABLE      DB  MAX_USERS * USER_RECORD_SIZE DUP(0)  ; 5 × 8 = 40B
+    USER_TABLE      DB  MAX_USERS * USER_RECORD_SIZE DUP(0)  ; 5 ?? 8 = 40B
     USER_COUNT      DB  0                ; active entries in USER_TABLE
     LOGIN_RETRIES   DB  0                ; wrong-password counter
     USERNAME_BUF    DB  3 DUP(0)         ; login input scratch
@@ -44,6 +44,7 @@
 
 .CODE
     EXTRN GAME_TICK:PROC
+    EXTRN SCR_SCORE_RUN:PROC
     EXTRN GFX_INIT:PROC, GFX_SHUTDOWN:PROC
     EXTRN FILE_LOAD_SCORES:PROC
     EXTRN USER_LOAD:PROC

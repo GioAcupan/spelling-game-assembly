@@ -10,8 +10,9 @@ STATE_DIFF   EQU 4
 STATE_INSTR  EQU 5
 STATE_ROUND  EQU 6
 STATE_JUDGE  EQU 7
-STATE_END    EQU 8
-STATE_QUIT   EQU 9
+STATE_SCORE  EQU 8    ; v1.4 score screen (before leaderboard)
+STATE_END    EQU 9    ; leaderboard only
+STATE_QUIT   EQU 10
 
 ; --- Difficulty tiers ---
 DIFF_EASY    EQU 0

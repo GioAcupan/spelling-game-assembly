@@ -1,12 +1,12 @@
-﻿; DATA.ASM â€” Word list (3 tiers), sprite data, sound patterns, UI strings
-; Pure data module â€” no .CODE. All symbols exported via PUBLIC.
+; DATA.ASM ??? Word list (3 tiers), sprite data, sound patterns, UI strings
+; Pure data module ??? no .CODE. All symbols exported via PUBLIC.
 
 .MODEL SMALL
 .DATA
     INCLUDE SHARED.INC
 
     ; ================================================================
-    ; WORD LISTS â€” 3 separate fixed-width arrays (16 bytes/word)
+    ; WORD LISTS ??? 3 separate fixed-width arrays (16 bytes/word)
     ; Address formula: tier_base + (index * WORD_RECORD_SIZE)
     ; DIFFICULTY byte in MAIN.ASM selects which tier base to use.
     ; ================================================================
@@ -51,10 +51,10 @@ HARD_WORDS DB 'ORANGE',0,  9 DUP(0) ; index 0
     DB 'DOLPHIN',0, 8 DUP(0) ; index 9
 
     ; ================================================================
-    ; SCRAMBLE TABLE â€” 30 scrambled words (v1.4)
+    ; SCRAMBLE TABLE ??? 30 scrambled words (v1.4)
     ; Same stride as word lists: WORD_RECORD_SIZE (16 bytes)
     ; Index: DIFFICULTY * WORDS_PER_TIER + CURRENT_WORD
-    ; Each entry is a hardcoded scramble â€” distinct from original,
+    ; Each entry is a hardcoded scramble ??? distinct from original,
     ; length-matched, ideally not a real word.
     ; ================================================================
 SCRAMBLE_TABLE DB 'ATC',0, 12 DUP(0)       ; CAT
@@ -89,7 +89,7 @@ SCRAMBLE_TABLE DB 'ATC',0, 12 DUP(0)       ; CAT
     DB 'PHINDOL',0, 8 DUP(0)    ; DOLPHIN
 
     ; ================================================================
-    ; TIER POINTER TABLE â€” lets SCR_GAME resolve tier base at runtime
+    ; TIER POINTER TABLE ??? lets SCR_GAME resolve tier base at runtime
     ; Usage: MOV BX, DIFFICULTY; SHL BX,1; MOV SI,[TIER_TABLE+BX]
     ; ================================================================
     PUBLIC TIER_TABLE
@@ -98,7 +98,7 @@ TIER_TABLE DW OFFSET EASY_WORDS    ; DIFF_EASY = 0
     DW OFFSET HARD_WORDS    ; DIFF_HARD = 2
 
     ; ================================================================
-    ; Per-word sound patterns â€” 30 patterns, indexed by global word index
+    ; Per-word sound patterns ??? 30 patterns, indexed by global word index
     ; Easy (0-9):   2-tone ascending, 150ms each
     ; Medium (10-19): 3-tone arpeggio, 100+100+150ms
     ; Hard (20-29):   4-tone ascending, 80+80+100+100ms
@@ -167,14 +167,14 @@ SOUND_TABLE DW OFFSET SND_WORD_00
     DW OFFSET SND_WORD_28
     DW OFFSET SND_WORD_29
 
-    ; --- Title jingle (v1.3) â€” C-E-G-C ascending, ~750ms ---
+    ; --- Title jingle (v1.3) ??? C-E-G-C ascending, ~750ms ---
 SND_TITLE_JINGLE DW 262, 175
     DW 330, 175
     DW 392, 175
     DW 523, 225
     DW 0
 
-    ; --- Win jingle (v1.3) â€” triumphant C5 fanfare, ~880ms ---
+    ; --- Win jingle (v1.3) ??? triumphant C5 fanfare, ~880ms ---
 SND_WIN_JINGLE DW 523, 150
     DW 0, 30
     DW 523, 150
@@ -184,25 +184,25 @@ SND_WIN_JINGLE DW 523, 150
     DW 523, 340
     DW 0
 
-    ; --- Lose jingle (v1.3) â€” descending sad, ~1100ms ---
+    ; --- Lose jingle (v1.3) ??? descending sad, ~1100ms ---
 SND_LOSE_JINGLE DW 330, 250
     DW 277, 250
     DW 262, 300
     DW 220, 300
     DW 0
 
-    ; --- Correct SFX (v1.4) â€” ascending major 3rd, ~440ms ---
+    ; --- Correct SFX (v1.4) ??? ascending major 3rd, ~440ms ---
 SND_CORRECT_SFX DW 440, 150     ; A4
     DW 523, 150                 ; C5 (major 3rd up)
     DW 0
 
-    ; --- Wrong SFX (v1.4) â€” descending minor 3rd, ~440ms ---
+    ; --- Wrong SFX (v1.4) ??? descending minor 3rd, ~440ms ---
 SND_WRONG_SFX DW 294, 150       ; D4
     DW 220, 150                 ; A3 (minor 3rd down)
     DW 0
 
     ; ================================================================
-    ; UI STRINGS â€” null-terminated, drawn by GFX_DRAW_STRING
+    ; UI STRINGS ??? null-terminated, drawn by GFX_DRAW_STRING
     ; ================================================================
     PUBLIC STR_TITLE, STR_INSTR, STR_GAMEOVER, STR_WIN
     PUBLIC STR_DIFF_PROMPT, STR_EASY, STR_MED, STR_HARD
@@ -211,7 +211,7 @@ SND_WRONG_SFX DW 294, 150       ; D4
     PUBLIC STR_VS, STR_WINNER, STR_TIE
     PUBLIC STR_HINT
     PUBLIC BG_TITLE, BG_MODE, BG_NAME, BG_DIFF, BG_INSTR, BG_ROUND, BG_END
-    PUBLIC BG_LOGIN
+    PUBLIC BG_LOGIN, BG_SCORE1, BG_SCORE2
     PUBLIC SCRAMBLE_TABLE
     PUBLIC SND_TITLE_JINGLE, SND_WIN_JINGLE, SND_LOSE_JINGLE
     PUBLIC SND_CORRECT_SFX, SND_WRONG_SFX
@@ -246,9 +246,11 @@ BG_INSTR  DB 'INSTR.BIN',0
 BG_ROUND  DB 'ROUND.BIN',0
 BG_END    DB 'END.BIN',0
 BG_LOGIN  DB 'LOGIN.BIN',0
+BG_SCORE1 DB 'SCORE1.BIN',0
+BG_SCORE2 DB 'SCORE2.BIN',0
 
     ; ================================================================
-    ; SPRITE TABLE â€” [TEST 3] stub, 30KB sprite data removed
+    ; SPRITE TABLE ??? [TEST 3] stub, 30KB sprite data removed
     ; TODO: v1.2 spec requires 30 sprites (10 per tier), each 32x32,
     ;       exported as raw byte arrays and pasted here.
     ; ================================================================

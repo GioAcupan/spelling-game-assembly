@@ -1,4 +1,4 @@
-; STATE.ASM — State dispatcher
+; STATE.ASM ??? State dispatcher
 ; Exports GAME_TICK: reads CURRENT_STATE, calls the matching screen handler.
 
 .MODEL SMALL
@@ -15,13 +15,14 @@
     EXTRN SCR_INSTR_RUN:PROC
     EXTRN SCR_ROUND_RUN:PROC
     EXTRN SCR_JUDGE_RUN:PROC
+    EXTRN SCR_SCORE_RUN:PROC
     EXTRN SCR_END_RUN:PROC
 
     PUBLIC GAME_TICK
 
 ;-----------------------------------------------------------
-; GAME_TICK — Dispatch CURRENT_STATE to the right screen handler.
-; In:  (none) — reads CURRENT_STATE
+; GAME_TICK ??? Dispatch CURRENT_STATE to the right screen handler.
+; In:  (none) ??? reads CURRENT_STATE
 ; Out: (none)
 ; Preserves: BX, CX, DX, SI, DI, BP
 ; Clobbers:  AX
@@ -45,9 +46,11 @@ GAME_TICK PROC
     JE  GT_ROUND
     CMP AL, STATE_JUDGE
     JE  GT_JUDGE
+    CMP AL, STATE_SCORE
+    JE  GT_SCORE
     CMP AL, STATE_END
     JE  GT_END
-    ; STATE_QUIT or unknown state — fall through to return
+    ; STATE_QUIT or unknown state ??? fall through to return
     RET
 
 GT_TITLE:
@@ -73,6 +76,9 @@ GT_ROUND:
     RET
 GT_JUDGE:
     CALL SCR_JUDGE_RUN
+    RET
+GT_SCORE:
+    CALL SCR_SCORE_RUN
     RET
 GT_END:
     CALL SCR_END_RUN

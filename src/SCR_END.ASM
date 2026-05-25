@@ -1,8 +1,9 @@
-; SCR_END.ASM — Score + Leaderboard + Game Over (v1.3 spec)
-; Public: SCR_END_RUN
-;   Flow: GFX_LOAD_BG → win/lose jingle → title banner →
-;         score display (1P/2P) → leaderboard insert/save →
-;         leaderboard render → INP_WAIT_KEY → STATE_QUIT
+; SCR_END.ASM — Score Screen + Leaderboard (v1.4)
+; Public: SCR_SCORE_RUN, SCR_END_RUN
+;   SCR_SCORE_RUN: GFX_CLEAR → route BG (1P/2P) → jingle → banner →
+;                  score display → INP_WAIT_KEY → STATE_END
+;   SCR_END_RUN:   GFX_CLEAR → GFX_LOAD_BG(END.BIN) → leaderboard
+;                  insert/save → leaderboard render → INP_WAIT_KEY → STATE_QUIT
 
 .MODEL SMALL
 .DATA
@@ -17,7 +18,7 @@
     EXTRN STR_GAMEOVER:BYTE, STR_WIN:BYTE
     EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE
     EXTRN STR_VS:BYTE, STR_WINNER:BYTE, STR_TIE:BYTE
-    EXTRN BG_END:BYTE
+    EXTRN BG_END:BYTE, BG_SCORE1:BYTE, BG_SCORE2:BYTE
     EXTRN SND_WIN_JINGLE:WORD, SND_LOSE_JINGLE:WORD
 
     ; --- Private strings ---
@@ -46,7 +47,7 @@
     ; --- File I/O procs ---
     EXTRN FILE_INSERT_SCORE:PROC, FILE_SAVE_SCORES:PROC
 
-    PUBLIC SCR_END_RUN
+    PUBLIC SCR_SCORE_RUN, SCR_END_RUN
 
 ; ================================================================
 ; NUM_TO_STR — Convert 16-bit unsigned to decimal ASCII string.
@@ -121,14 +122,14 @@ DRAW_CHAR_SAFE ENDP
 
 
 ; ================================================================
-; SCR_END_RUN — Show final scores, leaderboard, play jingle.
+; SCR_SCORE_RUN — Show player scores after the round ends.
+;   Routes background: SCORE1.BIN (1P) or SCORE2.BIN (2P).
+;   Plays win/lose jingle, shows banner, score display, winner.
 ;   Reads:  NUM_PLAYERS, SCORES[], HEARTS_ARR[], PLAYER_NAMES[]
-;           DIFFICULTY, LEADERBOARD
-;   Writes: LEADERBOARD (via FILE_INSERT_SCORE + FILE_SAVE_SCORES)
-;           CURRENT_STATE = STATE_QUIT
+;   Writes: CURRENT_STATE = STATE_END
 ;   Preserves: BX, CX, DX, SI, DI, BP
 ; ================================================================
-SCR_END_RUN PROC
+SCR_SCORE_RUN PROC
     PUSH BX
     PUSH CX
     PUSH DX
@@ -138,48 +139,54 @@ SCR_END_RUN PROC
     MOV  AX, @DATA
     MOV  DS, AX
 
-    ; --- 1. Clear framebuffer (fallback if END.BIN missing), then load bg ---
+    ; --- 1. Clear framebuffer, then load background (route by player count) ---
     MOV  AL, 0
     CALL GFX_CLEAR
-    LEA  DX, BG_END
+    CMP  NUM_PLAYERS, 2
+    JE   SSR_2P_BG
+    LEA  DX, BG_SCORE1
+    JMP  SSR_LOAD_BG
+SSR_2P_BG:
+    LEA  DX, BG_SCORE2
+SSR_LOAD_BG:
     CALL GFX_LOAD_BG            ; ES = A000h after this
 
     ; --- 2. Determine win/lose and play jingle ---
     MOV  AL, HEARTS_ARR
     OR   AL, AL
-    JZ   SER_LOSE_JINGLE
+    JZ   SSR_LOSE_JINGLE
     CMP  NUM_PLAYERS, 2
-    JB   SER_WIN_JINGLE
+    JB   SSR_WIN_JINGLE
     CMP  HEARTS_ARR+1, 0
-    JE   SER_LOSE_JINGLE
+    JE   SSR_LOSE_JINGLE
 
-SER_WIN_JINGLE:
+SSR_WIN_JINGLE:
     LEA  SI, SND_WIN_JINGLE
     CALL SND_PLAY_PATTERN
-    JMP  SER_AFTER_JINGLE
+    JMP  SSR_AFTER_JINGLE
 
-SER_LOSE_JINGLE:
+SSR_LOSE_JINGLE:
     LEA  SI, SND_LOSE_JINGLE
     CALL SND_PLAY_PATTERN
 
-SER_AFTER_JINGLE:
+SSR_AFTER_JINGLE:
     ; --- 3. Title banner: STR_WIN or STR_GAMEOVER ---
     MOV  AL, HEARTS_ARR
     OR   AL, AL
-    JZ   SER_LOSE_TITLE
+    JZ   SSR_LOSE_TITLE
     CMP  NUM_PLAYERS, 2
-    JB   SER_WIN_TITLE
+    JB   SSR_WIN_TITLE
     CMP  HEARTS_ARR+1, 0
-    JE   SER_LOSE_TITLE
+    JE   SSR_LOSE_TITLE
 
-SER_WIN_TITLE:
+SSR_WIN_TITLE:
     LEA  SI, STR_WIN
-    JMP  SER_DRAW_TITLE
+    JMP  SSR_DRAW_TITLE
 
-SER_LOSE_TITLE:
+SSR_LOSE_TITLE:
     LEA  SI, STR_GAMEOVER
 
-SER_DRAW_TITLE:
+SSR_DRAW_TITLE:
     MOV  BL, 15
     MOV  CX, 110
     MOV  DX, 20
@@ -187,7 +194,7 @@ SER_DRAW_TITLE:
 
     ; --- 4. Score display ---
     CMP  NUM_PLAYERS, 2
-    JE   SER_2P_SCORES
+    JE   SSR_2P_SCORES
 
     ; --- 4a. 1P score: "PLAYER 1 - AAA - 240 PTS" at Y=45 ---
     MOV  BL, 15
@@ -221,10 +228,10 @@ SER_DRAW_TITLE:
     CALL GFX_DRAW_STRING
     LEA  SI, STR_PTS
     CALL GFX_DRAW_STRING
-    JMP  SER_INSERT
+    JMP  SSR_WAIT_KEY
 
     ; --- 4b. 2P score display ---
-SER_2P_SCORES:
+SSR_2P_SCORES:
     ; P1 line: "PLAYER 1 - AAA - 150 PTS" at Y=40
     MOV  BL, 15
     MOV  CX, 60
@@ -294,8 +301,8 @@ SER_2P_SCORES:
     ; --- Winner / Tie banner at Y=78 ---
     MOV  AX, SCORES
     CMP  AX, SCORES+2
-    JE   SER_TIE
-    JA   SER_P1_WIN
+    JE   SSR_TIE
+    JA   SSR_P1_WIN
 
     ; P2 wins: "WINNER: BBB"
     MOV  BL, 15
@@ -309,9 +316,9 @@ SER_2P_SCORES:
     CALL DRAW_CHAR_SAFE
     MOV  AL, PLAYER_NAMES+5
     CALL DRAW_CHAR_SAFE
-    JMP  SER_INSERT
+    JMP  SSR_WAIT_KEY
 
-SER_P1_WIN:
+SSR_P1_WIN:
     ; P1 wins: "WINNER: AAA"
     MOV  BL, 15
     MOV  CX, 95
@@ -324,18 +331,56 @@ SER_P1_WIN:
     CALL DRAW_CHAR_SAFE
     MOV  AL, PLAYER_NAMES+2
     CALL DRAW_CHAR_SAFE
-    JMP  SER_INSERT
+    JMP  SSR_WAIT_KEY
 
-SER_TIE:
+SSR_TIE:
     MOV  BL, 15
     MOV  CX, 100
     MOV  DX, 78
     LEA  SI, STR_TIE
     CALL GFX_DRAW_STRING
 
-    ; --- 5. Leaderboard insert ---
-SER_INSERT:
-    ; Insert P1
+    ; --- 5. Wait for any key ---
+SSR_WAIT_KEY:
+    CALL INP_WAIT_KEY
+
+    ; --- 6. Transition to leaderboard ---
+    MOV  CURRENT_STATE, STATE_END
+    POP  BP
+    POP  DI
+    POP  SI
+    POP  DX
+    POP  CX
+    POP  BX
+    RET
+SCR_SCORE_RUN ENDP
+
+
+; ================================================================
+; SCR_END_RUN — Leaderboard insert, save, and display.
+;   Reads:  NUM_PLAYERS, SCORES[], PLAYER_NAMES[], DIFFICULTY,
+;           LEADERBOARD
+;   Writes: LEADERBOARD (via FILE_INSERT_SCORE + FILE_SAVE_SCORES)
+;           CURRENT_STATE = STATE_QUIT
+;   Preserves: BX, CX, DX, SI, DI, BP
+; ================================================================
+SCR_END_RUN PROC
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI
+    PUSH DI
+    PUSH BP
+    MOV  AX, @DATA
+    MOV  DS, AX
+
+    ; --- 1. Clear framebuffer, then load background ---
+    MOV  AL, 0
+    CALL GFX_CLEAR
+    LEA  DX, BG_END
+    CALL GFX_LOAD_BG            ; ES = A000h after this
+
+    ; --- 2. Leaderboard insert ---
     LEA  SI, PLAYER_NAMES
     MOV  BX, SCORES
     MOV  AL, DIFFICULTY
@@ -352,7 +397,7 @@ SER_INSERT:
 SER_SAVE:
     CALL FILE_SAVE_SCORES
 
-    ; --- 6. Leaderboard render ---
+    ; --- 3. Leaderboard render ---
     ; Header: "TOP 5 PLAYERS" at Y=105
     MOV  BL, 15
     MOV  CX, 95
@@ -422,10 +467,10 @@ SER_LB_NEXT:
     CMP  LB_IDX, LB_MAX_ENTRIES
     JB   SER_LB_LOOP
 
-    ; --- 7. Wait for any key ---
+    ; --- 4. Wait for any key ---
     CALL INP_WAIT_KEY
 
-    ; --- 8. Transition to quit ---
+    ; --- 5. Transition to quit ---
     MOV  CURRENT_STATE, STATE_QUIT
     POP  BP
     POP  DI

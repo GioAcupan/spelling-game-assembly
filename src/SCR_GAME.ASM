@@ -1,9 +1,9 @@
-; SCR_GAME.ASM — Main gameplay screen (v1.4 spec)
+; SCR_GAME.ASM ??? Main gameplay screen (v1.4 spec)
 ; Public: SCR_ROUND_RUN, SCR_JUDGE_RUN
-;   SCR_ROUND_RUN — per-player: reload bg → sprite → scramble → input loop
-;   SCR_JUDGE_RUN — judge answers, update scores/hearts, advance/end
+;   SCR_ROUND_RUN ??? per-player: reload bg ??? sprite ??? scramble ??? input loop
+;   SCR_JUDGE_RUN ??? judge answers, update scores/hearts, advance/end
 ;
-; v1.5: sprites + sounds integrated — GFX_DRAW_SPRITE + SND_PLAY_PATTERN active.
+; v1.5: sprites + sounds integrated ??? GFX_DRAW_SPRITE + SND_PLAY_PATTERN active.
 .MODEL SMALL
 .DATA
     INCLUDE SHARED.INC
@@ -55,8 +55,8 @@
     PUBLIC SCR_ROUND_RUN, SCR_JUDGE_RUN
 
 ; ================================================================
-; NUM_TO_STR — Convert 16-bit unsigned to decimal ASCII.
-;   In:  AX = number (0–65535)
+; NUM_TO_STR ??? Convert 16-bit unsigned to decimal ASCII.
+;   In:  AX = number (0???65535)
 ;        ES:DI = dest buffer (6 bytes min)
 ;   Out: buffer null-terminated; ES:DI advanced past string
 ;   Preserves: BX, CX, DX
@@ -103,7 +103,7 @@ NTS_DONE:
 NUM_TO_STR ENDP
 
 ; ================================================================
-; STR_COMPARE — Compare DS:SI word vs ES:DI user input.
+; STR_COMPARE ??? Compare DS:SI word vs ES:DI user input.
 ;   In:  DS:SI = correct word (null-terminated)
 ;        ES:DI = user input (null-terminated)
 ;   Out: ZF=1 if match, ZF=0 if mismatch
@@ -126,11 +126,11 @@ SCO_DONE:
 STR_COMPARE ENDP
 
 ; ================================================================
-; SCR_ROUND_RUN — Play one round for all NUM_PLAYERS players.
+; SCR_ROUND_RUN ??? Play one round for all NUM_PLAYERS players.
 ;   Reads:  CURRENT_WORD, DIFFICULTY, NUM_PLAYERS, word lists
 ;   Writes: PLAYER_RESULTS[], PLAYER_TIMES[], CURRENT_STATE
-;   Flow:   clear → compute idx → sound → player loop
-;           (bg → sprite → scramble → input per player) → STATE_JUDGE
+;   Flow:   clear ??? compute idx ??? sound ??? player loop
+;           (bg ??? sprite ??? scramble ??? input per player) ??? STATE_JUDGE
 ;   Preserves: BX, CX, DX, SI, DI, BP
 ;   Clobbers:  AX
 ; ================================================================
@@ -283,7 +283,7 @@ SRR_NOT_ENTER:
 SRR_STORE:
     MOV  [DI+BX], AL             ; store in buffer (DS:@DATA)
 
-    ; Echo char at (130 + BX*8, 170) — save ALL regs GFX clobbers
+    ; Echo char at (130 + BX*8, 170) ??? save ALL regs GFX clobbers
     PUSH AX
     PUSH CX
     PUSH DX
@@ -316,7 +316,7 @@ SRR_BACKSPACE:
     DEC  BX
 
     ; Erase 8x8 block at (130 + BX*8, 170) with black pixels
-    ; GFX_DRAW_CHAR with space won't work — font glyph 0 is all
+    ; GFX_DRAW_CHAR with space won't work ??? font glyph 0 is all
     ; transparent bits, so nothing gets drawn. Write directly.
     PUSH AX
     PUSH CX
@@ -420,12 +420,12 @@ SRR_ALL_DONE:
 SCR_ROUND_RUN ENDP
 
 ; ================================================================
-; SCR_JUDGE_RUN — Judge all players, update scores/hearts.
+; SCR_JUDGE_RUN ??? Judge all players, update scores/hearts.
 ;   Reads:  PLAYER_RESULTS[], PLAYER_TIMES[], CURRENT_WORD
 ;           DIFFICULTY, NUM_PLAYERS
 ;   Writes: SCORES[], HEARTS_ARR[], CURRENT_WORD, CURRENT_STATE
 ;   1P: sequential per-player loop (clear between each)
-;   2P: shared screen — P1 left | P2 right with divider
+;   2P: shared screen ??? P1 left | P2 right with divider
 ;   Preserves: BX, CX, DX, SI, DI, BP
 ;   Clobbers:  AX
 ; ================================================================
@@ -557,7 +557,7 @@ SJR_CONTINUE_LOOP:
     JMP  SJR_LOOP
 
 ; ================================================================
-; SJR_2P_MODE — 2-player judge: shared screen with divider
+; SJR_2P_MODE ??? 2-player judge: shared screen with divider
 ;   P1 on left, P2 on right, "|" divider at X=158
 ; ================================================================
 SJR_2P_MODE:
@@ -816,7 +816,7 @@ SJR_CHECK_WORDS:
     JMP  SJR_EXIT
 
 SJR_END:
-    MOV  CURRENT_STATE, STATE_END
+    MOV  CURRENT_STATE, STATE_SCORE
 
 SJR_EXIT:
     POP  BP
