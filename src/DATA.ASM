@@ -191,6 +191,16 @@ SND_LOSE_JINGLE DW 330, 250
     DW 220, 300
     DW 0
 
+    ; --- Correct SFX (v1.4) â€” ascending major 3rd, ~440ms ---
+SND_CORRECT_SFX DW 440, 150     ; A4
+    DW 523, 150                 ; C5 (major 3rd up)
+    DW 0
+
+    ; --- Wrong SFX (v1.4) â€” descending minor 3rd, ~440ms ---
+SND_WRONG_SFX DW 294, 150       ; D4
+    DW 220, 150                 ; A3 (minor 3rd down)
+    DW 0
+
     ; ================================================================
     ; UI STRINGS â€” null-terminated, drawn by GFX_DRAW_STRING
     ; ================================================================
@@ -204,6 +214,7 @@ SND_LOSE_JINGLE DW 330, 250
     PUBLIC BG_LOGIN
     PUBLIC SCRAMBLE_TABLE
     PUBLIC SND_TITLE_JINGLE, SND_WIN_JINGLE, SND_LOSE_JINGLE
+    PUBLIC SND_CORRECT_SFX, SND_WRONG_SFX
 
 STR_TITLE       DB 'SPELLING FUN!',0
 STR_INSTR       DB 'TYPE WHAT YOU HEAR. PRESS ENTER.',0

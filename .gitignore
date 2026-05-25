@@ -12,3 +12,6 @@ nul
 src/SPRITES.ASM
 src/SPRITES.ASM.full
 .gitnexus
+.claude/
+AGENTS.md
+CLAUDE.md
