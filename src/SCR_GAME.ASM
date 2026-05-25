@@ -21,7 +21,7 @@
     EXTRN TIER_TABLE:WORD
     EXTRN STR_GAMEOVER:BYTE, STR_WIN:BYTE
     EXTRN STR_PLAYER1:BYTE, STR_PLAYER2:BYTE, STR_YOUR_TURN:BYTE
-    EXTRN STR_VS:BYTE, BG_ROUND:BYTE
+    EXTRN STR_VS:BYTE, BG_ROUND:BYTE, BG_JUDGE:BYTE
     EXTRN SCRAMBLE_TABLE:BYTE, STR_HINT:BYTE
     EXTRN SPRITE_TABLE:BYTE, SOUND_TABLE:WORD
     EXTRN SND_CORRECT_SFX:WORD, SND_WRONG_SFX:WORD
@@ -456,7 +456,7 @@ SJR_LOOP:
     ; --- Clear screen + reload background ---
     MOV  AL, 0
     CALL GFX_CLEAR                ; black fallback if BG_ROUND.BIN missing
-    LEA  DX, BG_ROUND
+    LEA  DX, BG_JUDGE
     CALL GFX_LOAD_BG              ; ES = A000h
 
     ; --- "PLAYER N" header (skip in 1P) ---
@@ -564,7 +564,7 @@ SJR_2P_MODE:
     ; --- Clear screen + load background ---
     MOV  AL, 0
     CALL GFX_CLEAR
-    LEA  DX, BG_ROUND
+    LEA  DX, BG_JUDGE
     CALL GFX_LOAD_BG              ; ES = A000h
 
     ; ===== Player 1 (left side) =====
