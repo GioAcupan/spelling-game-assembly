@@ -1,6 +1,6 @@
 ; SCR_END.ASM — Score Screen + Leaderboard (v1.4)
 ; Public: SCR_SCORE_RUN, SCR_END_RUN
-;   SCR_SCORE_RUN: GFX_CLEAR → route BG (1P/2P) → jingle → banner →
+;   SCR_SCORE_RUN: GFX_CLEAR → route BG (1P/2P) → jingle →
 ;                  score display → INP_WAIT_KEY → STATE_END
 ;   SCR_END_RUN:   GFX_CLEAR → GFX_LOAD_BG(END.BIN) → leaderboard
 ;                  insert/save → leaderboard render → INP_WAIT_KEY → STATE_QUIT
@@ -124,7 +124,7 @@ DRAW_CHAR_SAFE ENDP
 ; ================================================================
 ; SCR_SCORE_RUN — Show player scores after the round ends.
 ;   Routes background: SCORE1.BIN (1P) or SCORE2.BIN (2P).
-;   Plays win/lose jingle, shows banner, score display, winner.
+;   Plays win/lose jingle, shows score display, winner.
 ;   Reads:  NUM_PLAYERS, SCORES[], HEARTS_ARR[], PLAYER_NAMES[]
 ;   Writes: CURRENT_STATE = STATE_END
 ;   Preserves: BX, CX, DX, SI, DI, BP
@@ -170,41 +170,14 @@ SSR_LOSE_JINGLE:
     CALL SND_PLAY_PATTERN
 
 SSR_AFTER_JINGLE:
-    ; --- 3. Title banner: STR_WIN or STR_GAMEOVER ---
-    MOV  AL, HEARTS_ARR
-    OR   AL, AL
-    JZ   SSR_LOSE_TITLE
-    CMP  NUM_PLAYERS, 2
-    JB   SSR_WIN_TITLE
-    CMP  HEARTS_ARR+1, 0
-    JE   SSR_LOSE_TITLE
-
-SSR_WIN_TITLE:
-    LEA  SI, STR_WIN
-    JMP  SSR_DRAW_TITLE
-
-SSR_LOSE_TITLE:
-    LEA  SI, STR_GAMEOVER
-
-SSR_DRAW_TITLE:
-    MOV  BL, 15
-    MOV  CX, 110
-    MOV  DX, 20
-    CALL GFX_DRAW_STRING
-
-    ; --- 4. Score display ---
+    ; --- 3. Score display ---
     CMP  NUM_PLAYERS, 2
     JE   SSR_2P_SCORES
 
-    ; --- 4a. 1P score: "PLAYER 1 - AAA - 240 PTS" at Y=45 ---
-    MOV  BL, 15
-    MOV  CX, 70
-    MOV  DX, 45
-
-    LEA  SI, STR_PLAYER1
-    CALL GFX_DRAW_STRING
-    LEA  SI, STR_DASH
-    CALL GFX_DRAW_STRING
+    ; --- 3a. 1P score row at (145, 108) ---
+    MOV  BL, 1
+    MOV  CX, 145
+    MOV  DX, 108
 
     MOV  AL, PLAYER_NAMES
     CALL DRAW_CHAR_SAFE
@@ -224,23 +197,19 @@ SSR_DRAW_TITLE:
     CALL NUM_TO_STR
     POP  ES
 
+    SUB  CX, 10
     LEA  SI, NUM_BUF
     CALL GFX_DRAW_STRING
     LEA  SI, STR_PTS
     CALL GFX_DRAW_STRING
     JMP  SSR_WAIT_KEY
 
-    ; --- 4b. 2P score display ---
+    ; --- 3b. 2P score display ---
 SSR_2P_SCORES:
-    ; P1 line: "PLAYER 1 - AAA - 150 PTS" at Y=40
-    MOV  BL, 15
-    MOV  CX, 60
-    MOV  DX, 40
-
-    LEA  SI, STR_PLAYER1
-    CALL GFX_DRAW_STRING
-    LEA  SI, STR_DASH
-    CALL GFX_DRAW_STRING
+    ; P1 row at (144, 96)
+    MOV  BL, 1
+    MOV  CX, 144
+    MOV  DX, 96
 
     MOV  AL, PLAYER_NAMES
     CALL DRAW_CHAR_SAFE
@@ -260,20 +229,16 @@ SSR_2P_SCORES:
     CALL NUM_TO_STR
     POP  ES
 
+    SUB  CX, 10
     LEA  SI, NUM_BUF
     CALL GFX_DRAW_STRING
     LEA  SI, STR_PTS
     CALL GFX_DRAW_STRING
 
-    ; P2 line: "PLAYER 2 - BBB - 90 PTS" at Y=58
-    MOV  BL, 15
-    MOV  CX, 60
-    MOV  DX, 58
-
-    LEA  SI, STR_PLAYER2
-    CALL GFX_DRAW_STRING
-    LEA  SI, STR_DASH
-    CALL GFX_DRAW_STRING
+    ; P2 row at (144, 115)
+    MOV  BL, 1
+    MOV  CX, 144
+    MOV  DX, 115
 
     MOV  AL, PLAYER_NAMES+3
     CALL DRAW_CHAR_SAFE
@@ -293,6 +258,7 @@ SSR_2P_SCORES:
     CALL NUM_TO_STR
     POP  ES
 
+    SUB  CX, 10
     LEA  SI, NUM_BUF
     CALL GFX_DRAW_STRING
     LEA  SI, STR_PTS
@@ -305,7 +271,7 @@ SSR_2P_SCORES:
     JA   SSR_P1_WIN
 
     ; P2 wins: "WINNER: BBB"
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 95
     MOV  DX, 78
     LEA  SI, STR_WINNER
@@ -320,7 +286,7 @@ SSR_2P_SCORES:
 
 SSR_P1_WIN:
     ; P1 wins: "WINNER: AAA"
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 95
     MOV  DX, 78
     LEA  SI, STR_WINNER
@@ -334,17 +300,17 @@ SSR_P1_WIN:
     JMP  SSR_WAIT_KEY
 
 SSR_TIE:
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 100
     MOV  DX, 78
     LEA  SI, STR_TIE
     CALL GFX_DRAW_STRING
 
-    ; --- 5. Wait for any key ---
+    ; --- 4. Wait for any key ---
 SSR_WAIT_KEY:
     CALL INP_WAIT_KEY
 
-    ; --- 6. Transition to leaderboard ---
+    ; --- 5. Transition to leaderboard ---
     MOV  CURRENT_STATE, STATE_END
     POP  BP
     POP  DI
@@ -398,16 +364,9 @@ SER_SAVE:
     CALL FILE_SAVE_SCORES
 
     ; --- 3. Leaderboard render ---
-    ; Header: "TOP 5 PLAYERS" at Y=105
-    MOV  BL, 15
-    MOV  CX, 95
-    MOV  DX, 105
-    LEA  SI, STR_LEADER
-    CALL GFX_DRAW_STRING
-
     ; Init loop state in scratch variables
     MOV  LB_OFFSET, 0
-    MOV  LB_Y, 120
+    MOV  LB_Y, 57
     MOV  LB_IDX, 0
 
 SER_LB_LOOP:
@@ -416,10 +375,10 @@ SER_LB_LOOP:
     CMP  BYTE PTR [LEADERBOARD + DI], 0
     JE   SER_LB_NEXT
 
-    ; --- Draw name (3 chars) at (40, LB_Y) ---
-    MOV  CX, 40
+    ; --- Draw name (3 chars) at (82, LB_Y) ---
+    MOV  CX, 82
     MOV  DX, LB_Y
-    MOV  BL, 15
+    MOV  BL, 1
 
     MOV  AL, [LEADERBOARD + DI]
     CALL DRAW_CHAR_SAFE

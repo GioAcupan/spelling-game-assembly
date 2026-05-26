@@ -299,40 +299,24 @@ SLR_RENDER:
     LEA  DX, BG_LOGIN
     CALL GFX_LOAD_BG             ; ES = A000h after call
 
-    LEA  SI, STR_LOGIN
-    MOV  BL, 15
-    MOV  CX, 130
-    MOV  DX, 30
-    CALL GFX_DRAW_STRING         ; ES = A000h
-
-    LEA  SI, STR_USERNAME
-    MOV  CX, 60
-    MOV  DX, 80
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_PASSWORD
-    MOV  CX, 60
-    MOV  DX, 110
-    CALL GFX_DRAW_STRING
-
 SLR_PROMPT:
-    ; --- Read username (3 chars, echo below label at y=88) ---
+    ; --- Read username (3 chars) ---
     PUSH DS
     POP  ES                      ; ES = DS for buffer access
     LEA  DI, USERNAME_BUF
-    MOV  BL, 60                  ; echo X
-    MOV  BH, 15                  ; white
-    MOV  DL, 88                  ; echo Y (label at y=80, echo 8px below)
+    MOV  BL, 167                 ; echo X
+    MOV  BH, 1                   ; dark blue
+    MOV  DL, 97                  ; echo Y
     MOV  CX, 3
     CALL SCI_ECHO_INPUT
 
-    ; --- Read password (5 chars, echo below label at y=118) ---
+    ; --- Read password (5 chars) ---
     PUSH DS
     POP  ES
     LEA  DI, PASSWORD_BUF
-    MOV  BL, 60
-    MOV  BH, 15
-    MOV  DL, 118                 ; echo Y (label at y=110, echo 8px below)
+    MOV  BL, 167
+    MOV  BH, 1
+    MOV  DL, 118                 ; echo Y
     MOV  CX, 5
     CALL SCI_ECHO_INPUT
 
@@ -435,22 +419,6 @@ SCR_MODE_RUN PROC
     LEA  DX, BG_MODE
     CALL GFX_LOAD_BG             ; ES = A000h
 
-    LEA  SI, STR_MODE_PROMPT
-    MOV  BL, 15
-    MOV  CX, 90
-    MOV  DX, 70
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_1P
-    MOV  CX, 100
-    MOV  DX, 100
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_2P
-    MOV  CX, 100
-    MOV  DX, 120
-    CALL GFX_DRAW_STRING
-
 SMR_WAIT:
     CALL INP_WAIT_KEY
     CMP  AL, '1'
@@ -516,25 +484,6 @@ SCR_NAME_RUN PROC
     LEA  DX, BG_NAME
     CALL GFX_LOAD_BG             ; ES = A000h
 
-    ; --- "PLAYER N" header ---
-    MOV  AL, CURRENT_PLAYER
-    OR   AL, AL
-    JNZ  SNR_P2
-    LEA  SI, STR_PLAYER1
-    JMP  SNR_HDR
-SNR_P2:
-    LEA  SI, STR_PLAYER2
-SNR_HDR:
-    MOV  BL, 15
-    MOV  CX, 130
-    MOV  DX, 60
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, PROMPT_NAME
-    MOV  CX, 80
-    MOV  DX, 90
-    CALL GFX_DRAW_STRING
-
     ; --- Compute destination: PLAYER_NAMES + CURRENT_PLAYER*3 ---
     MOV  AL, CURRENT_PLAYER
     MOV  AH, 0
@@ -543,13 +492,12 @@ SNR_HDR:
     LEA  DI, PLAYER_NAMES
     ADD  DI, AX                   ; DS:DI = name slot for this player
 
-    ; --- Read 3 chars with echo at (80, 98) ---
+    ; --- Read 3 chars with echo at (132, 97) ---
     PUSH DS
     POP  ES                      ; ES = DS for buffer access
-    ; DI already = PLAYER_NAMES + CURRENT_PLAYER*3 (computed above)
-    MOV  BL, 80                  ; echo X (after PROMPT_NAME at CX=80)
-    MOV  BH, 15                  ; white
-    MOV  DL, 98                  ; echo Y (label at y=90, 8px below)
+    MOV  BL, 132                 ; echo X
+    MOV  BH, 1                   ; dark blue
+    MOV  DL, 97                  ; echo Y
     MOV  CX, 3
     CALL SCI_ECHO_INPUT
 
@@ -591,27 +539,6 @@ SCR_DIFF_RUN PROC
     CALL GFX_CLEAR
     LEA  DX, BG_DIFF
     CALL GFX_LOAD_BG             ; ES = A000h
-
-    LEA  SI, STR_DIFF_PROMPT
-    MOV  BL, 15
-    MOV  CX, 90
-    MOV  DX, 60
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_EASY
-    MOV  CX, 100
-    MOV  DX, 90
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_MED
-    MOV  CX, 100
-    MOV  DX, 110
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, STR_HARD
-    MOV  CX, 100
-    MOV  DX, 130
-    CALL GFX_DRAW_STRING
 
 SDR_WAIT:
     CALL INP_WAIT_KEY
@@ -656,17 +583,6 @@ SCR_INSTR_RUN PROC
     CALL GFX_CLEAR
     LEA  DX, BG_INSTR
     CALL GFX_LOAD_BG             ; ES = A000h
-
-    LEA  SI, STR_INSTR
-    MOV  BL, 15
-    MOV  CX, 40
-    MOV  DX, 90
-    CALL GFX_DRAW_STRING
-
-    LEA  SI, PROMPT_KEY
-    MOV  CX, 100
-    MOV  DX, 120
-    CALL GFX_DRAW_STRING
 
     CALL INP_WAIT_KEY
 

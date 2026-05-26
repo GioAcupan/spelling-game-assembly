@@ -1,9 +1,9 @@
-; SCR_GAME.ASM ??? Main gameplay screen (v1.4 spec)
+; SCR_GAME.ASM — Main gameplay screen (v1.4 spec)
 ; Public: SCR_ROUND_RUN, SCR_JUDGE_RUN
-;   SCR_ROUND_RUN ??? per-player: reload bg ??? sprite ??? scramble ??? input loop
-;   SCR_JUDGE_RUN ??? judge answers, update scores/hearts, advance/end
+;   SCR_ROUND_RUN — per-player: reload bg → sprite → scramble → input loop
+;   SCR_JUDGE_RUN — judge answers, update scores/hearts, advance/end
 ;
-; v1.5: sprites + sounds integrated ??? GFX_DRAW_SPRITE + SND_PLAY_PATTERN active.
+; v1.5: sprites + sounds integrated — GFX_DRAW_SPRITE + SND_PLAY_PATTERN active.
 .MODEL SMALL
 .DATA
     INCLUDE SHARED.INC
@@ -55,8 +55,8 @@
     PUBLIC SCR_ROUND_RUN, SCR_JUDGE_RUN
 
 ; ================================================================
-; NUM_TO_STR ??? Convert 16-bit unsigned to decimal ASCII.
-;   In:  AX = number (0???65535)
+; NUM_TO_STR — Convert 16-bit unsigned to decimal ASCII.
+;   In:  AX = number (0–65535)
 ;        ES:DI = dest buffer (6 bytes min)
 ;   Out: buffer null-terminated; ES:DI advanced past string
 ;   Preserves: BX, CX, DX
@@ -103,7 +103,7 @@ NTS_DONE:
 NUM_TO_STR ENDP
 
 ; ================================================================
-; STR_COMPARE ??? Compare DS:SI word vs ES:DI user input.
+; STR_COMPARE — Compare DS:SI word vs ES:DI user input.
 ;   In:  DS:SI = correct word (null-terminated)
 ;        ES:DI = user input (null-terminated)
 ;   Out: ZF=1 if match, ZF=0 if mismatch
@@ -126,11 +126,11 @@ SCO_DONE:
 STR_COMPARE ENDP
 
 ; ================================================================
-; SCR_ROUND_RUN ??? Play one round for all NUM_PLAYERS players.
+; SCR_ROUND_RUN — Play one round for all NUM_PLAYERS players.
 ;   Reads:  CURRENT_WORD, DIFFICULTY, NUM_PLAYERS, word lists
 ;   Writes: PLAYER_RESULTS[], PLAYER_TIMES[], CURRENT_STATE
-;   Flow:   clear ??? compute idx ??? sound ??? player loop
-;           (bg ??? sprite ??? scramble ??? input per player) ??? STATE_JUDGE
+;   Flow:   clear → compute idx → sound → player loop
+;           (bg → sprite → scramble → input per player) → STATE_JUDGE
 ;   Preserves: BX, CX, DX, SI, DI, BP
 ;   Clobbers:  AX
 ; ================================================================
@@ -198,22 +198,22 @@ SRR_PLAYER_LOOP:
     MOV  SI, AX
     ADD  SI, OFFSET SPRITE_TABLE ; DS:SI = sprite pixel data
     MOV  BX, 144                ; x (centered)
-    MOV  DX, 50                 ; y
+    MOV  DX, 35                 ; y
     CALL GFX_DRAW_SPRITE
 
     ; --- Draw scramble hint ---
     LEA  SI, STR_HINT
     MOV  BL, 14                  ; yellow
     MOV  CX, 100
-    MOV  DX, 95
+    MOV  DX, 80
     CALL GFX_DRAW_STRING         ; clobbers AX! reload offset after
 
     MOV  AX, SCRAMBLE_OFF        ; reload after GFX clobbers AX
     LEA  SI, SCRAMBLE_TABLE
     ADD  SI, AX                  ; DS:SI = scrambled word
-    MOV  BL, 15                  ; white
+    MOV  BL, 1                   ; dark blue
     MOV  CX, 148
-    MOV  DX, 95
+    MOV  DX, 80
     CALL GFX_DRAW_STRING
 
     ; --- 7a. "PLAYER N" banner (skip in 1P for cleaner UI) ---
@@ -228,24 +228,24 @@ SRR_PLAYER_LOOP:
 SRR_P2_BANNER:
     LEA  SI, STR_PLAYER2
 SRR_DRAW_BANNER:
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 130
-    MOV  DX, 125
+    MOV  DX, 92
     CALL GFX_DRAW_STRING
 
 SRR_SKIP_BANNER:
     ; --- "YOUR TURN!" ---
-    MOV  BL, 15
+    MOV  BL, 1
     LEA  SI, STR_YOUR_TURN
     MOV  CX, 130
-    MOV  DX, 140
+    MOV  DX, 106
     CALL GFX_DRAW_STRING
 
     ; --- "TYPE IT:" ---
-    MOV  BL, 15
+    MOV  BL, 1
     LEA  SI, STR_TYPE
     MOV  CX, 130
-    MOV  DX, 155
+    MOV  DX, 120
     CALL GFX_DRAW_STRING
 
     ; --- 7b. Record start tick ---
@@ -257,6 +257,7 @@ SRR_SKIP_BANNER:
     MOV  PLAYER_TIMES[BX], DX    ; save start tick
 
     ; --- 7c. Read player input with real-time echo ---
+    ; Echo char at (111 + BX*8, 141)
     ; Buffer addressed via DS:DI+BX (avoids ES clobber from GFX calls)
     LEA  DI, INPUT_BUFFER
     XOR  BX, BX                  ; BX = current length
@@ -283,7 +284,7 @@ SRR_NOT_ENTER:
 SRR_STORE:
     MOV  [DI+BX], AL             ; store in buffer (DS:@DATA)
 
-    ; Echo char at (130 + BX*8, 170) ??? save ALL regs GFX clobbers
+    ; Echo char — save ALL regs GFX clobbers
     PUSH AX
     PUSH CX
     PUSH DX
@@ -294,10 +295,10 @@ SRR_STORE:
     SHL  BX, 1
     SHL  BX, 1
     SHL  BX, 1                   ; BX = index * 8
-    ADD  BX, 130
-    MOV  CX, BX                  ; CX = 130 + index*8
-    MOV  DX, 170
-    MOV  BL, 15                  ; white
+    ADD  BX, 111
+    MOV  CX, BX                  ; CX = 111 + index*8
+    MOV  DX, 141
+    MOV  BL, 1                   ; dark blue
     CALL GFX_DRAW_CHAR           ; clobbers AX,CX,DX,SI,DI,ES
     POP  BX                      ; restore index
     POP  ES
@@ -315,9 +316,7 @@ SRR_BACKSPACE:
     JZ   SRR_CHAR_LOOP           ; nothing to delete
     DEC  BX
 
-    ; Erase 8x8 block at (130 + BX*8, 170) with black pixels
-    ; GFX_DRAW_CHAR with space won't work ??? font glyph 0 is all
-    ; transparent bits, so nothing gets drawn. Write directly.
+    ; Erase 8x8 block at (111 + BX*8, 141) with black pixels
     PUSH AX
     PUSH CX
     PUSH DX
@@ -327,9 +326,9 @@ SRR_BACKSPACE:
     SHL  BX, 1
     SHL  BX, 1
     SHL  BX, 1
-    ADD  BX, 130                 ; BX = X = 130 + index*8
+    ADD  BX, 111                 ; BX = X = 111 + index*8
     MOV  CX, BX                  ; CX = X
-    MOV  DX, 170                 ; DX = Y
+    MOV  DX, 141                 ; DX = Y
 
     ; DI = Y*320 + X
     PUSH AX
@@ -420,12 +419,12 @@ SRR_ALL_DONE:
 SCR_ROUND_RUN ENDP
 
 ; ================================================================
-; SCR_JUDGE_RUN ??? Judge all players, update scores/hearts.
+; SCR_JUDGE_RUN — Judge all players, update scores/hearts.
 ;   Reads:  PLAYER_RESULTS[], PLAYER_TIMES[], CURRENT_WORD
 ;           DIFFICULTY, NUM_PLAYERS
 ;   Writes: SCORES[], HEARTS_ARR[], CURRENT_WORD, CURRENT_STATE
 ;   1P: sequential per-player loop (clear between each)
-;   2P: shared screen ??? P1 left | P2 right with divider
+;   2P: shared screen — P1 left | P2 right with divider
 ;   Preserves: BX, CX, DX, SI, DI, BP
 ;   Clobbers:  AX
 ; ================================================================
@@ -471,7 +470,7 @@ SJR_LOOP:
 SJR_P2_HEAD:
     LEA  SI, STR_PLAYER2
 SJR_DRAW_HEAD:
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 130
     MOV  DX, 30
     CALL GFX_DRAW_STRING
@@ -510,7 +509,7 @@ SJR_ADD_SCORE:
 
     ; Draw "SCORE: " label
     PUSH AX                      ; save score value
-    MOV  BL, 15
+    MOV  BL, 1
     LEA  SI, STR_SCORE
     MOV  CX, 120
     MOV  DX, 65
@@ -523,7 +522,7 @@ SJR_ADD_SCORE:
     LEA  DI, NUM_BUF
     CALL NUM_TO_STR
     POP  ES                      ; ES = A000h
-    MOV  BL, 15
+    MOV  BL, 1
     LEA  SI, NUM_BUF
     MOV  CX, 180
     MOV  DX, 65
@@ -557,7 +556,7 @@ SJR_CONTINUE_LOOP:
     JMP  SJR_LOOP
 
 ; ================================================================
-; SJR_2P_MODE ??? 2-player judge: shared screen with divider
+; SJR_2P_MODE — 2-player judge: shared screen with divider
 ;   P1 on left, P2 on right, "|" divider at X=158
 ; ================================================================
 SJR_2P_MODE:
@@ -571,9 +570,9 @@ SJR_2P_MODE:
 
     ; Draw P1 header
     LEA  SI, STR_PLAYER1
-    MOV  BL, 15
-    MOV  CX, 45
-    MOV  DX, 30
+    MOV  BL, 1
+    MOV  CX, 75
+    MOV  DX, 45
     CALL GFX_DRAW_STRING
 
     ; Check P1 result
@@ -583,8 +582,8 @@ SJR_2P_MODE:
     ; --- P1 correct ---
     LEA  SI, STR_RIGHT
     MOV  BL, 14                   ; yellow
-    MOV  CX, 50
-    MOV  DX, 50
+    MOV  CX, 80
+    MOV  DX, 65
     CALL GFX_DRAW_STRING
 
     ; Compute P1 score delta
@@ -600,9 +599,9 @@ SJR_2P_P1_ADD:
 
     ; Draw "SCORE:" label
     LEA  SI, STR_SCORE
-    MOV  BL, 15
-    MOV  CX, 35
-    MOV  DX, 65
+    MOV  BL, 1
+    MOV  CX, 65
+    MOV  DX, 80
     CALL GFX_DRAW_STRING
 
     ; Draw P1 score value
@@ -614,9 +613,9 @@ SJR_2P_P1_ADD:
     CALL NUM_TO_STR
     POP  ES                       ; ES = A000h
     LEA  SI, NUM_BUF
-    MOV  BL, 15
-    MOV  CX, 100
-    MOV  DX, 65
+    MOV  BL, 1
+    MOV  CX, 130
+    MOV  DX, 80
     CALL GFX_DRAW_STRING
     LEA  SI, SND_CORRECT_SFX
     CALL SND_PLAY_PATTERN
@@ -626,8 +625,8 @@ SJR_2P_P1_WRONG:
     DEC  HEARTS_ARR                ; HEARTS_ARR[0]--
     LEA  SI, STR_WRONG
     MOV  BL, 12                   ; red-ish
-    MOV  CX, 50
-    MOV  DX, 50
+    MOV  CX, 80
+    MOV  DX, 65
     CALL GFX_DRAW_STRING
     LEA  SI, SND_WRONG_SFX
     CALL SND_PLAY_PATTERN
@@ -635,11 +634,7 @@ SJR_2P_P1_WRONG:
     ; ===== Divider =====
 SJR_2P_DIVIDER:
     MOV  AL, '|'
-    MOV  BL, 15
-    MOV  CX, 158
-    MOV  DX, 30
-    CALL GFX_DRAW_CHAR
-    MOV  AL, '|'
+    MOV  BL, 1
     MOV  CX, 158
     MOV  DX, 45
     CALL GFX_DRAW_CHAR
@@ -647,14 +642,18 @@ SJR_2P_DIVIDER:
     MOV  CX, 158
     MOV  DX, 60
     CALL GFX_DRAW_CHAR
+    MOV  AL, '|'
+    MOV  CX, 158
+    MOV  DX, 75
+    CALL GFX_DRAW_CHAR
 
     ; ===== Player 2 (right side) =====
 
     ; Draw P2 header
     LEA  SI, STR_PLAYER2
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 195
-    MOV  DX, 30
+    MOV  DX, 45
     CALL GFX_DRAW_STRING
 
     ; Check P2 result
@@ -665,7 +664,7 @@ SJR_2P_DIVIDER:
     LEA  SI, STR_RIGHT
     MOV  BL, 14                   ; yellow
     MOV  CX, 200
-    MOV  DX, 50
+    MOV  DX, 65
     CALL GFX_DRAW_STRING
 
     ; Compute P2 score delta
@@ -681,9 +680,9 @@ SJR_2P_P2_ADD:
 
     ; Draw "SCORE:" label
     LEA  SI, STR_SCORE
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 185
-    MOV  DX, 65
+    MOV  DX, 80
     CALL GFX_DRAW_STRING
 
     ; Draw P2 score value
@@ -695,9 +694,9 @@ SJR_2P_P2_ADD:
     CALL NUM_TO_STR
     POP  ES                       ; ES = A000h
     LEA  SI, NUM_BUF
-    MOV  BL, 15
+    MOV  BL, 1
     MOV  CX, 250
-    MOV  DX, 65
+    MOV  DX, 80
     CALL GFX_DRAW_STRING
     LEA  SI, SND_CORRECT_SFX
     CALL SND_PLAY_PATTERN
@@ -708,21 +707,23 @@ SJR_2P_P2_WRONG:
     LEA  SI, STR_WRONG
     MOV  BL, 12                   ; red-ish
     MOV  CX, 200
-    MOV  DX, 50
+    MOV  DX, 65
     CALL GFX_DRAW_STRING
     LEA  SI, SND_WRONG_SFX
     CALL SND_PLAY_PATTERN
 
 SJR_2P_DONE:
-    JMP  SJR_LOOP_DONE
 
 SJR_LOOP_DONE:
-
     ; --- 3. Show current total scores ---
-    ; "SCORE: NNN" for P1 (and P2 if 2P)
-    MOV  BL, 15
+    ; Route: 1P uses x=120 column, 2P uses x=70 column (left-shifted)
+    CMP  NUM_PLAYERS, 2
+    JE   SJR_DISPLAY_2P
+
+    ; === 1P score display (x=120, aligned with YES!/SCORE: above) ===
+    MOV  BL, 1
     LEA  SI, STR_SCORE
-    MOV  CX, 100
+    MOV  CX, 120
     MOV  DX, 100
     CALL GFX_DRAW_STRING
 
@@ -735,19 +736,53 @@ SJR_LOOP_DONE:
     CALL NUM_TO_STR
     POP  ES
     LEA  SI, NUM_BUF
-    MOV  BL, 15
-    MOV  CX, 168
+    MOV  BL, 1
+    MOV  CX, 188
     MOV  DX, 100
     CALL GFX_DRAW_STRING
 
-    CMP  NUM_PLAYERS, 2
-    JNE  SJR_WAIT_KEY
+    ; Hearts
+    LEA  SI, STR_HEARTS
+    MOV  BL, 1
+    MOV  CX, 120
+    MOV  DX, 115
+    CALL GFX_DRAW_STRING
+
+    MOV  CX, 192
+    MOV  DX, 115
+    MOV  AL, HEARTS_ARR
+    ADD  AL, '0'
+    MOV  BL, 1
+    CALL GFX_DRAW_CHAR
+    JMP  SJR_WAIT_KEY
+
+    ; === 2P score display (x=70, left-shifted ~30px) ===
+SJR_DISPLAY_2P:
+    MOV  BL, 1
+    LEA  SI, STR_SCORE
+    MOV  CX, 70
+    MOV  DX, 115
+    CALL GFX_DRAW_STRING
+
+    ; P1 score
+    MOV  AX, SCORES
+    PUSH ES
+    PUSH DS
+    POP  ES
+    LEA  DI, NUM_BUF
+    CALL NUM_TO_STR
+    POP  ES
+    LEA  SI, NUM_BUF
+    MOV  BL, 1
+    MOV  CX, 138
+    MOV  DX, 115
+    CALL GFX_DRAW_STRING
 
     ; P2 score
-    MOV  BL, 15
+    MOV  BL, 1
     LEA  SI, STR_VS
-    MOV  CX, 195
-    MOV  DX, 100
+    MOV  CX, 165
+    MOV  DX, 115
     CALL GFX_DRAW_STRING
 
     MOV  AX, SCORES+2
@@ -758,32 +793,29 @@ SJR_LOOP_DONE:
     CALL NUM_TO_STR
     POP  ES
     LEA  SI, NUM_BUF
-    MOV  BL, 15
-    MOV  CX, 225
-    MOV  DX, 100
+    MOV  BL, 1
+    MOV  CX, 195
+    MOV  DX, 115
     CALL GFX_DRAW_STRING
 
-    ; --- Show hearts ---
+    ; Hearts
     LEA  SI, STR_HEARTS
-    MOV  BL, 15
-    MOV  CX, 100
-    MOV  DX, 115
+    MOV  BL, 1
+    MOV  CX, 70
+    MOV  DX, 130
     CALL GFX_DRAW_STRING
 
     ; P1 hearts count
-    MOV  CX, 172
-    MOV  DX, 115
+    MOV  CX, 142
+    MOV  DX, 130
     MOV  AL, HEARTS_ARR
     ADD  AL, '0'
-    MOV  BL, 15
+    MOV  BL, 1
     CALL GFX_DRAW_CHAR
 
-    CMP  NUM_PLAYERS, 2
-    JNE  SJR_WAIT_KEY
-
     ; P2 hearts
-    MOV  CX, 225
-    MOV  DX, 115
+    MOV  CX, 195
+    MOV  DX, 130
     MOV  AL, HEARTS_ARR+1
     ADD  AL, '0'
     CALL GFX_DRAW_CHAR
