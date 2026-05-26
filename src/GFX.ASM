@@ -350,7 +350,7 @@ GFX_CLEAR PROC
 GFX_CLEAR ENDP
 
 ;-----------------------------------------------------------
-; GFX_DRAW_SPRITE — Draw 32×32 sprite with color-0 transparency.
+; GFX_DRAW_SPRITE — Draw 32×32 sprite with color-255 transparency.
 ; In:  DS:SI = 1024-byte sprite data (row-major, 32×32)
 ;      BX = x (0–287), DX = y (0–167)
 ; Out: Sprite composited onto framebuffer; ES = A000h
@@ -388,8 +388,8 @@ GDS_ROW:
     MOV  CX, 32              ; column counter
 GDS_COL:
     LODSB                    ; AL = [DS:SI], SI++
-    OR   AL, AL
-    JZ   GDS_SKIP
+    CMP  AL, 255
+    JE   GDS_SKIP
     STOSB                    ; ES:[DI]=AL, DI++
     LOOP GDS_COL
     JMP  GDS_ROWADV
