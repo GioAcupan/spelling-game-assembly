@@ -174,10 +174,10 @@ SSR_AFTER_JINGLE:
     CMP  NUM_PLAYERS, 2
     JE   SSR_2P_SCORES
 
-    ; --- 3a. 1P score row at (145, 108) ---
+    ; --- 3a. 1P score row at (131, 104) ---
     MOV  BL, 1
-    MOV  CX, 145
-    MOV  DX, 108
+    MOV  CX, 131
+    MOV  DX, 104
 
     MOV  AL, PLAYER_NAMES
     CALL DRAW_CHAR_SAFE
@@ -207,10 +207,10 @@ SSR_AFTER_JINGLE:
 
     ; --- 3b. 2P score display ---
 SSR_2P_SCORES:
-    ; P1 row at (144, 96)
+    ; P1 row at (136, 93)
     MOV  BL, 1
-    MOV  CX, 144
-    MOV  DX, 96
+    MOV  CX, 136
+    MOV  DX, 93
 
     MOV  AL, PLAYER_NAMES
     CALL DRAW_CHAR_SAFE
@@ -236,10 +236,10 @@ SSR_2P_SCORES:
     LEA  SI, STR_PTS
     CALL GFX_DRAW_STRING
 
-    ; P2 row at (144, 115)
+    ; P2 row at (136, 122)
     MOV  BL, 1
-    MOV  CX, 144
-    MOV  DX, 115
+    MOV  CX, 136
+    MOV  DX, 122
 
     MOV  AL, PLAYER_NAMES+3
     CALL DRAW_CHAR_SAFE
