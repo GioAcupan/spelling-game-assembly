@@ -40,6 +40,14 @@
     GLOBAL_IDX  DW 0                   ; global word index (safe across calls)
     SCRAMBLE_OFF DW 0                  ; pre-computed scramble table offset
 
+    ; --- Echo save buffer for clean backspace ---
+    ECHO_COL  DB 111
+    ECHO_ROW  DB 141
+    ECHO_XW   DW 0
+    ECHO_IDX  DB 0
+    ECHO_CHR  DB 0
+    ECHO_SAVE DB 1024 DUP(0)       ; 16 slots × 64 bytes
+
 .CODE
     ; --- GFX procs ---
     EXTRN GFX_LOAD_BG:PROC, GFX_CLEAR:PROC
@@ -283,6 +291,8 @@ SRR_NOT_ENTER:
 
 SRR_STORE:
     MOV  [DI+BX], AL             ; store in buffer (DS:@DATA)
+    MOV  ECHO_IDX, BL            ; save index for backspace
+    MOV  ECHO_CHR, AL            ; save char (clobbered by save loop)
 
     ; Echo char — save ALL regs GFX clobbers
     PUSH AX
@@ -292,14 +302,53 @@ SRR_STORE:
     PUSH DI
     PUSH ES
     PUSH BX                      ; save index
+
+    ; --- Save 8x8 background at (111 + idx*8, 141) ---
     SHL  BX, 1
     SHL  BX, 1
-    SHL  BX, 1                   ; BX = index * 8
+    SHL  BX, 1                   ; BX = idx * 8
     ADD  BX, 111
-    MOV  CX, BX                  ; CX = 111 + index*8
+    MOV  ECHO_XW, BX             ; X = 111 + idx*8
+
+    ; DI = Y*320 + X
+    MOV  AX, 141
+    MOV  DX, 320
+    MUL  DX                      ; AX = 141*320
+    ADD  AX, ECHO_XW
+    MOV  DI, AX                  ; DI = VRAM offset
+
+    ; SI = OFFSET ECHO_SAVE + idx*64
+    MOV  AL, ECHO_IDX
+    MOV  AH, 64
+    MUL  AH                      ; AX = idx * 64
+    LEA  SI, ECHO_SAVE
+    ADD  SI, AX                  ; DS:SI = save slot
+
+    ; Copy 8x8 from VRAM → save buffer
+    PUSH ES
+    MOV  AX, 0A000h
+    MOV  ES, AX                  ; ES = video memory
+    MOV  AH, 8                   ; 8 rows
+SRR_SAV_ROW:
+    MOV  CX, 8
+SRR_SAV_COL:
+    MOV  AL, ES:[DI]
+    MOV  [SI], AL
+    INC  DI
+    INC  SI
+    LOOP SRR_SAV_COL
+    ADD  DI, 320-8
+    DEC  AH
+    JNZ  SRR_SAV_ROW
+    POP  ES
+
+    ; --- Draw character ---
+    MOV  AL, ECHO_CHR            ; restore char
+    MOV  CX, ECHO_XW
     MOV  DX, 141
     MOV  BL, 1                   ; dark blue
-    CALL GFX_DRAW_CHAR           ; clobbers AX,CX,DX,SI,DI,ES
+    CALL GFX_DRAW_CHAR
+
     POP  BX                      ; restore index
     POP  ES
     POP  DI
@@ -313,54 +362,62 @@ SRR_STORE:
 
 SRR_BACKSPACE:
     OR   BX, BX
-    JZ   SRR_CHAR_LOOP           ; nothing to delete
+    JNZ  SRR_BS_DO               ; something to delete
+    JMP  SRR_CHAR_LOOP           ; nothing — near jump
+SRR_BS_DO:
     DEC  BX
+    MOV  ECHO_IDX, BL            ; save idx for restore
 
-    ; Erase 8x8 block at (111 + BX*8, 141) with black pixels
     PUSH AX
     PUSH CX
     PUSH DX
     PUSH DI
+    PUSH SI
     PUSH ES
-    PUSH BX
-    SHL  BX, 1
-    SHL  BX, 1
-    SHL  BX, 1
-    ADD  BX, 111                 ; BX = X = 111 + index*8
-    MOV  CX, BX                  ; CX = X
-    MOV  DX, 141                 ; DX = Y
+
+    ; --- Restore 8x8 background from save buffer ---
+    ; SI = OFFSET ECHO_SAVE + idx*64
+    MOV  AL, ECHO_IDX
+    MOV  AH, 64
+    MUL  AH                      ; AX = idx * 64
+    LEA  SI, ECHO_SAVE
+    ADD  SI, AX                  ; DS:SI = save slot
+
+    ; Compute X = 111 + idx*8
+    MOV  AL, ECHO_IDX
+    XOR  AH, AH
+    SHL  AX, 1
+    SHL  AX, 1
+    SHL  AX, 1                   ; AX = idx * 8
+    ADD  AX, 111                 ; AX = X
 
     ; DI = Y*320 + X
+    MOV  DX, 141
     PUSH AX
-    MOV  AX, 0A000h
-    MOV  ES, AX                  ; ES = video memory
-    MOV  AX, DX
-    SHL  AX, 1
-    SHL  AX, 1
-    SHL  AX, 1
-    SHL  AX, 1
-    SHL  AX, 1
-    SHL  AX, 1                   ; AX = Y*64
+    MOV  AX, 320
+    MUL  DX                      ; AX = 141*320
+    POP  DX                      ; DX = X
+    ADD  AX, DX                  ; AX = Y*320 + X
     MOV  DI, AX
-    SHL  AX, 1
-    SHL  AX, 1                   ; AX = Y*256
-    ADD  DI, AX                  ; DI = Y*320
-    POP  AX
-    ADD  DI, CX                  ; DI = Y*320 + X
 
-    XOR  AL, AL                  ; color 0 = black
-    MOV  AH, 8                   ; 8 rows
-SRR_BS_ROW:
-    PUSH DI
+    ; Copy 8x8 from save buffer → VRAM
+    MOV  AX, 0A000h
+    MOV  ES, AX
+    MOV  AH, 8
+SRR_RST_ROW:
     MOV  CX, 8
-    REP  STOSB                   ; fill 8 black pixels
-    POP  DI
-    ADD  DI, 320                 ; next row
+SRR_RST_COL:
+    MOV  AL, [SI]
+    MOV  ES:[DI], AL
+    INC  SI
+    INC  DI
+    LOOP SRR_RST_COL
+    ADD  DI, 320-8
     DEC  AH
-    JNZ  SRR_BS_ROW
+    JNZ  SRR_RST_ROW
 
-    POP  BX
     POP  ES
+    POP  SI
     POP  DI
     POP  DX
     POP  CX
