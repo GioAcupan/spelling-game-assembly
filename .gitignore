@@ -1,9 +1,6 @@
 # Build outputs
 build/
-bin/
-*.OBJ
-*.MAP
-*.EXE
+
 
 # Temp / backup / debug artifacts
 *.bak
