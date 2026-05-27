@@ -58,7 +58,7 @@
 ; Replaces INP_READ_STRING when screen-positioned echo is needed.
 ; In:  BL = echo X start, BH = echo color, DL = echo Y
 ;      ES:DI = buffer, CX = max length
-; Out: buffer null-terminated, CX = actual length
+; Out: buffer space-padded to CX chars, CX = padded length
 ; Preserves: SI, DI, BP
 ; Clobbers: AX, BX, CX, DX
 ;-----------------------------------------------------------
@@ -234,8 +234,16 @@ SEI_RST_COL:
     JMP  SEI_LOOP
 
 SEI_DONE:
-    MOV  BYTE PTR ES:[DI+BX], 0   ; null-terminate
-    MOV  CX, BX              ; return length
+    ; Space-pad unfilled positions (fixes embedded-null user entries)
+    CMP  BX, CX
+    JAE  SEI_LEN
+SEI_PAD:
+    MOV  BYTE PTR ES:[DI+BX], ' '
+    INC  BX
+    CMP  BX, CX
+    JB   SEI_PAD
+SEI_LEN:
+    MOV  CX, BX              ; return padded length
 
     POP  DI
     POP  SI
