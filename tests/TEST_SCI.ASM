@@ -113,7 +113,7 @@ TEST_DONE:
     MOV  AL, 0
     CALL GFX_CLEAR
     LEA  SI, STR_DONE
-    MOV  BL, 10
+    MOV  BL, 28
     MOV  CX, 40
     MOV  DX, 90
     CALL GFX_DRAW_STRING

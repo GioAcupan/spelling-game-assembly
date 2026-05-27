@@ -80,7 +80,7 @@ MAIN PROC
 
     ; 5. Draw "PRESS KEY" in yellow at (112, 140)
     LEA  SI, PRESS_MSG
-    MOV  BL, 14               ; yellow
+    MOV  BL, 6                ; dark yellow
     MOV  CX, 112
     MOV  DX, 140
     CALL GFX_DRAW_STRING

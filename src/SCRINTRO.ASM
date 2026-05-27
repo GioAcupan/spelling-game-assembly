@@ -336,7 +336,7 @@ SLR_PROMPT:
     INC  LOGIN_RETRIES
     LEA  SI, STR_WRONG_PW
     MOV  BL, 12                  ; red-ish
-    MOV  CX, 60
+    MOV  CX, 90
     MOV  DX, 150
     CALL GFX_DRAW_STRING
     MOV  CX, 1200
@@ -350,7 +350,7 @@ SLR_PROMPT:
 SLR_FULL:
     LEA  SI, STR_USERS_FULL
     MOV  BL, 12
-    MOV  CX, 60
+    MOV  CX, 90
     MOV  DX, 150
     CALL GFX_DRAW_STRING
     MOV  CX, 2000
@@ -365,8 +365,8 @@ SLR_OK:
     LEA  SI, STR_WELCOME
 
 SLR_PROCEED:
-    MOV  BL, 10                  ; green-ish
-    MOV  CX, 60
+    MOV  BL, 28                  ; dark green
+    MOV  CX, 90
     MOV  DX, 150
     CALL GFX_DRAW_STRING
 

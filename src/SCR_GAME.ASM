@@ -211,7 +211,7 @@ SRR_PLAYER_LOOP:
 
     ; --- Draw scramble hint ---
     LEA  SI, STR_HINT
-    MOV  BL, 14                  ; yellow
+    MOV  BL, 6                   ; dark yellow
     MOV  CX, 100
     MOV  DX, 80
     CALL GFX_DRAW_STRING         ; clobbers AX! reload offset after
@@ -542,7 +542,7 @@ SJR_CHECK_RESULT:
     PUSH BX                      ; save BX = byte index
 
     ; Draw "YES!"
-    MOV  BL, 14                  ; yellow
+    MOV  BL, 6                   ; dark yellow
     LEA  SI, STR_RIGHT
     MOV  CX, 120
     MOV  DX, 50
@@ -638,7 +638,7 @@ SJR_2P_MODE:
 
     ; --- P1 correct ---
     LEA  SI, STR_RIGHT
-    MOV  BL, 14                   ; yellow
+    MOV  BL, 6                    ; dark yellow
     MOV  CX, 80
     MOV  DX, 65
     CALL GFX_DRAW_STRING
@@ -719,7 +719,7 @@ SJR_2P_DIVIDER:
 
     ; --- P2 correct ---
     LEA  SI, STR_RIGHT
-    MOV  BL, 14                   ; yellow
+    MOV  BL, 6                    ; dark yellow
     MOV  CX, 200
     MOV  DX, 65
     CALL GFX_DRAW_STRING
