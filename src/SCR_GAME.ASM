@@ -32,6 +32,7 @@
     STR_WRONG   DB 'OOPS!',0
     STR_TYPE    DB 'TYPE IT:',0
     STR_SCORE   DB 'SCORE:',0
+    STR_TOTAL   DB 'TOTAL:',0
 
     STR_HEARTS  DB 'HEARTS:',0
     NUM_BUF     DB 6 DUP(0)            ; scratch for score-to-ASCII
@@ -562,7 +563,7 @@ SJR_CHECK_RESULT:
 
 SJR_ADD_SCORE:
     ADD  SCORES[BX], CX          ; add delta to total
-    MOV  AX, SCORES[BX]          ; read score BEFORE GFX clobbers BX
+    MOV  AX, CX                   ; AX = delta (round score)
 
     ; Draw "SCORE: " label
     PUSH AX                      ; save score value
@@ -653,6 +654,7 @@ SJR_2P_MODE:
     MOV  CX, 10                   ; minimum 10 points
 SJR_2P_P1_ADD:
     ADD  SCORES, CX               ; SCORES[0] += delta
+    PUSH CX                      ; save delta across draw
 
     ; Draw "SCORE:" label
     LEA  SI, STR_SCORE
@@ -662,7 +664,8 @@ SJR_2P_P1_ADD:
     CALL GFX_DRAW_STRING
 
     ; Draw P1 score value
-    MOV  AX, SCORES
+    POP  CX
+    MOV  AX, CX                  ; AX = delta (round score)
     PUSH ES
     PUSH DS
     POP  ES                       ; ES = DS for NUM_TO_STR
@@ -734,6 +737,7 @@ SJR_2P_DIVIDER:
     MOV  CX, 10                   ; minimum 10 points
 SJR_2P_P2_ADD:
     ADD  SCORES+2, CX             ; SCORES[1] += delta
+    PUSH CX                      ; save delta across draw
 
     ; Draw "SCORE:" label
     LEA  SI, STR_SCORE
@@ -743,7 +747,8 @@ SJR_2P_P2_ADD:
     CALL GFX_DRAW_STRING
 
     ; Draw P2 score value
-    MOV  AX, SCORES+2
+    POP  CX
+    MOV  AX, CX                  ; AX = delta (round score)
     PUSH ES
     PUSH DS
     POP  ES                       ; ES = DS for NUM_TO_STR
@@ -779,7 +784,7 @@ SJR_LOOP_DONE:
 
     ; === 1P score display (x=120, aligned with YES!/SCORE: above) ===
     MOV  BL, 1
-    LEA  SI, STR_SCORE
+    LEA  SI, STR_TOTAL
     MOV  CX, 120
     MOV  DX, 100
     CALL GFX_DRAW_STRING
@@ -816,7 +821,7 @@ SJR_LOOP_DONE:
     ; === 2P score display (x=70, left-shifted ~30px) ===
 SJR_DISPLAY_2P:
     MOV  BL, 1
-    LEA  SI, STR_SCORE
+    LEA  SI, STR_TOTAL
     MOV  CX, 70
     MOV  DX, 115
     CALL GFX_DRAW_STRING
