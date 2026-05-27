@@ -4,7 +4,6 @@ bin/
 *.OBJ
 *.MAP
 *.EXE
-!GAMETEMP.EXE
 
 # Temp / backup / debug artifacts
 *.bak
@@ -15,3 +14,6 @@ src/SPRITES.ASM.full
 .claude/
 AGENTS.md
 CLAUDE.md
+
+# Local AI coding settings
+settings.local.json
